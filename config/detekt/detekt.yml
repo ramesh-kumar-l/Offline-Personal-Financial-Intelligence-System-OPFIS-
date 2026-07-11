@@ -1,0 +1,26 @@
+build:
+  maxIssues: 0
+
+style:
+  MagicNumber:
+    active: false
+  ReturnCount:
+    active: true
+    max: 3
+
+complexity:
+  LongParameterList:
+    functionThreshold: 6
+    constructorThreshold: 8
+  TooManyFunctions:
+    thresholdInClasses: 15
+
+comments:
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false
+
+naming:
+  FunctionNaming:
+    excludes: ['**/commonTest/**', '**/androidTest/**', '**/desktopTest/**']
