@@ -10,16 +10,18 @@ import androidx.compose.runtime.Composable
  * Dark mode is first-class, not an afterthought (SystemPrompt Part 3).
  * Every screen must be composed against both schemes below.
  */
-private val OpfisLightColorScheme = lightColorScheme(
-    primary = OpfisColors.ProfessionalBlue,
-    error = OpfisColors.Error,
-    background = OpfisColors.BackgroundNeutralGray,
-)
+private val OpfisLightColorScheme =
+    lightColorScheme(
+        primary = OpfisColors.ProfessionalBlue,
+        error = OpfisColors.Error,
+        background = OpfisColors.BackgroundNeutralGray,
+    )
 
-private val OpfisDarkColorScheme = darkColorScheme(
-    primary = OpfisColors.ProfessionalBlue,
-    error = OpfisColors.Error,
-)
+private val OpfisDarkColorScheme =
+    darkColorScheme(
+        primary = OpfisColors.ProfessionalBlue,
+        error = OpfisColors.Error,
+    )
 
 @Composable
 fun OpfisTheme(

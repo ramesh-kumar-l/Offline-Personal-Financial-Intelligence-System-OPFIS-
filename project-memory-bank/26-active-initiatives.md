@@ -2,24 +2,25 @@
 
 ## Current phase
 
-Phase 0 - Foundation (ROADMAP.md). Scaffold implemented; blocked on
-build verification (see `05-current-state.md` "Known gaps").
+Phase 1 - Core Persistence (ROADMAP.md) implemented and tested; Phase 0
+formally closed (build verified green on real toolchain). Awaiting
+owner review/approval before Phase 2 (Financial Domain) begins - per
+the phase-execution policy in SYSTEM.md, do not start Phase 2
+autonomously.
 
 ## Active tasks
 
-- Owner (human) to run the first real `./gradlew` (after generating
-  the wrapper jar) or open the project in Android Studio, on a machine
-  with JDK 17+ and an updated Android SDK (`platform;android-35`,
-  current `build-tools`, `cmdline-tools`), and report any compile
-  errors back for fixing.
-- Once build passes: Phase 0 can be formally closed and Phase 1 (Core
-  Persistence - SQLCipher, schema, repository layer, migrations) can
-  begin, pending explicit approval per the phase-execution policy.
+- Owner to review the Phase 1 implementation (encrypted persistence,
+  ADR 0004/0005) and either approve moving to Phase 2 or request
+  changes.
+- When an Android emulator/device becomes available, add an
+  instrumented test for the real `AndroidSqliteDriver` + `SupportFactory`
+  encrypted path (Desktop's equivalent is already tested - see
+  `05-current-state.md`).
 
 ## Blockers
 
-- Local dev machine (this session's environment) lacks a JDK, has an
-  outdated Android SDK (`D:\AndroidSDK`, max API 29, no cmdline-tools),
-  and the sandboxed shell has no outbound internet access - none of
-  these could be fixed from within this session. Not a code blocker;
-  an environment one.
+None currently - the toolchain gap that blocked Phase 0 (no JDK, no
+current Android SDK, no internet) was resolved this session (JDK
+25.0.3, Android SDK platform 36 at `D:\Android_SDK_New`, working
+internet access confirmed).

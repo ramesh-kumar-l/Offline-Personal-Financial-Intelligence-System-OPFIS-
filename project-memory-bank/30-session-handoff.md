@@ -4,52 +4,61 @@ Last session: 2026-07-11
 
 ## Completed this session
 
-- Read and reconciled all engineering docs (SYSTEM.md, VISION.md,
-  PRD.md, ROADMAP.md, SystemPrompt Parts 1-5, memory-bank stubs).
-- Decided, with explicit owner approval, three architecture questions
-  that were open going into Phase 0: platform (Compose Multiplatform,
-  not Android-only), module granularity (lean 4-module split), and
-  minSdk (26). Recorded as ADR 0001-0003 in `docs/adr/`.
-- Implemented the Phase 0 scaffold: `:shared`, `:domain`, `:data`,
-  `:composeApp` Gradle modules; one vertical slice ("System Status" /
-  trust indicators) through all four layers; Koin DI wiring; ktlint +
-  detekt config; GitHub Actions CI; `.gitignore`; README rewrite.
-- Updated memory bank: `02-system-architecture.md`,
-  `06-tech-stack.md`, `07-repository-structure.md`,
-  `24-adr-index.md`, `05-current-state.md`, `26-active-initiatives.md`
-  (this file).
+- Owner installed a real toolchain (JDK 25.0.3, Android SDK platform 36
+  at `D:\Android_SDK_New`) and this session got real internet access,
+  resolving every gap Phase 0 had previously flagged as unverified.
+- Verified and bumped every dependency version against Maven
+  Central/Google Maven as of 2026-07-11 (Gradle 9.6.1, AGP 9.2.1,
+  Kotlin 2.4.0, Compose Multiplatform 1.11.1, Koin 4.2.2, etc.) -
+  Phase 0's originally-guessed versions were a year+ stale.
+- Generated the real `gradle-wrapper.jar` (bootstrapped via a
+  downloaded Gradle 9.6.1 distribution) and committed it.
+- Hit and fixed a real AGP 9.0 breaking change (KMP + `com.android.library`
+  incompatibility) via documented compatibility flags - ADR 0004.
+- Ran `./gradlew ktlintCheck detekt allTests assemble` to a fully green
+  state for both Android and Desktop - **Phase 0 exit criteria ("build
+  passes") is now met**, closing the gap the previous session left
+  open.
+- Implemented Phase 1 (Core Persistence) per ROADMAP.md: SQLDelight +
+  SQLCipher encrypted database, platform driver factories, encryption
+  key providers, a persisted `SystemStatusRepository` replacing Phase
+  0's static stand-in, a versioned migration, and `BackupPort` +
+  `FileBackupPort` - see ADR 0005 for the full design and its
+  documented Phase 8/9 follow-ups.
+- Wrote and ran 7 new tests against the real (non-mocked) encrypted
+  database via `:data:desktopTest`, covering: reopen-after-close
+  persistence, wrong-passphrase rejection, schema auto-migration, and
+  backup/restore round-trip. All pass.
+- Updated memory bank: `02-system-architecture.md`, `05-current-state.md`,
+  `06-tech-stack.md`, `07-repository-structure.md`, `24-adr-index.md`,
+  `26-active-initiatives.md` (this file).
 
 ## Not completed
 
-- **Local build verification.** No JDK on this machine; Android SDK at
-  `D:\AndroidSDK` is from ~2020 (max platform 29, no cmdline-tools);
-  sandboxed shell has no outbound internet. Could not run
-  `./gradlew` or resolve dependencies. This is the single most
-  important next step - the scaffold is unverified.
-- `gradle/wrapper/gradle-wrapper.jar` was not generated (binary,
-  requires a real Gradle install). `gradle-wrapper.properties` is in
-  place; running `gradle wrapper --gradle-version 8.10` once on a
-  machine with Gradle available will complete it.
+- Android's encrypted driver path is compiled and assembled
+  (`:composeApp:assembleDebug` succeeds) but not exercised by an
+  instrumented test - no emulator/device available in this
+  environment. Desktop's equivalent path is fully tested.
+- Desktop's encryption key currently lives in a plain file
+  (`~/.opfis/.opfis_db_key`) with no OS-keychain protection - documented
+  Phase 8 follow-up in ADR 0005, not an oversight.
+- Phase 2 (Financial Domain) has not been started.
 
 ## Next recommended task
 
-1. On a machine with JDK 17+ and a current Android SDK: run
-   `gradle wrapper --gradle-version 8.10`, then
-   `./gradlew ktlintCheck detekt allTests assemble`. Report back any
-   errors (most likely: dependency version mismatches in
-   `gradle/libs.versions.toml`, since those were chosen without being
-   able to check current Maven Central availability).
-2. Once green, close Phase 0 (update `05-current-state.md` "Pending"
-   and mark exit criteria met) and get explicit approval before
-   starting Phase 1 (Core Persistence: SQLCipher, schema, repository
-   layer, migrations) per the phase-execution policy in SYSTEM.md.
+1. Owner review of Phase 1 (particularly ADR 0005's key-management
+   scope boundary) and explicit approval to start Phase 2.
+2. Phase 2 (Financial Domain): accounts, assets, liabilities,
+   transactions, categories, budgets, goals - extends the same
+   SQLDelight schema/migration pattern established in Phase 1.
+3. When an Android emulator/device is available, add the instrumented
+   test flagged above.
 
 ## Open risks
 
-- Dependency versions in `gradle/libs.versions.toml` (Kotlin 2.1.0,
-  Compose Multiplatform 1.7.1, AGP 8.7.2, Koin 4.0.0, etc.) are
-  believed current but unverified against Maven Central.
-- The Compose Multiplatform + Koin + KMP Gradle DSL in the module
-  `build.gradle.kts` files was hand-written without a compiler
-  feedback loop. Treat first-sync errors as expected and normal, not
-  as a sign of a deeper design problem.
+- AGP 9's compatibility flags (ADR 0004) are a deprecated-but-working
+  path with a shelf life - must be revisited before AGP 10.0.
+- `androidx.security.crypto` 1.1.0 (latest stable) self-flags
+  `EncryptedSharedPreferences`/`MasterKey` as deprecated; no replacement
+  API was adopted yet since 1.1.0 is still the current stable release -
+  watch for its successor before/during Phase 8.

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,6 +33,7 @@ import org.koin.compose.koinInject
  * Domain -> Infrastructure round trip compiles, wires through Koin,
  * and renders.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SystemStatusScreen() {
     val observeSystemStatus = koinInject<ObserveSystemStatusUseCase>()
@@ -55,14 +57,16 @@ fun SystemStatusScreen() {
 
 @Composable
 private fun TrustIndicatorRow(indicator: TrustIndicator) {
-    val (marker, tint) = when (indicator.state) {
-        TrustIndicatorState.ACTIVE -> "●" to OpfisColors.Success
-        TrustIndicatorState.PENDING -> "●" to OpfisColors.Warning
-    }
-    val stateLabel = when (indicator.state) {
-        TrustIndicatorState.ACTIVE -> "Active"
-        TrustIndicatorState.PENDING -> "Pending"
-    }
+    val (marker, tint) =
+        when (indicator.state) {
+            TrustIndicatorState.ACTIVE -> "●" to OpfisColors.Success
+            TrustIndicatorState.PENDING -> "●" to OpfisColors.Warning
+        }
+    val stateLabel =
+        when (indicator.state) {
+            TrustIndicatorState.ACTIVE -> "Active"
+            TrustIndicatorState.PENDING -> "Pending"
+        }
 
     Column {
         Text(text = "$marker ${indicator.label}", color = tint, style = MaterialTheme.typography.bodyLarge)

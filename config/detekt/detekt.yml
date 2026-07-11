@@ -24,3 +24,10 @@ comments:
 naming:
   FunctionNaming:
     excludes: ['**/commonTest/**', '**/androidTest/**', '**/desktopTest/**']
+    ignoreAnnotated: ['Composable']
+  MatchingDeclarationName:
+    # KMP `actual` files are conventionally named `Foo.android.kt` /
+    # `Foo.desktop.kt` (matching ktlint's `ktlint_standard_filename =
+    # disabled` in .editorconfig for the same reason) - the platform
+    # suffix never matches the declaration name 1:1.
+    active: false

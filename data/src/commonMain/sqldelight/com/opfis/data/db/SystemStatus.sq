@@ -1,0 +1,29 @@
+CREATE TABLE system_status_indicator (
+    id TEXT NOT NULL PRIMARY KEY,
+    label TEXT NOT NULL,
+    state TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+selectAll:
+SELECT * FROM system_status_indicator ORDER BY created_at ASC;
+
+selectById:
+SELECT * FROM system_status_indicator WHERE id = ?;
+
+insertOrReplace:
+INSERT OR REPLACE INTO system_status_indicator (id, label, state, created_at, updated_at, version)
+VALUES (?, ?, ?, ?, ?, ?);
+
+updateState:
+UPDATE system_status_indicator
+SET state = ?, updated_at = ?, version = version + 1
+WHERE id = ?;
+
+deleteById:
+DELETE FROM system_status_indicator WHERE id = ?;
+
+deleteAll:
+DELETE FROM system_status_indicator;

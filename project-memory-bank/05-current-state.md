@@ -1,49 +1,82 @@
 # Current State
 
-Last updated: 2026-07-11 (Phase 0, in progress - implementation done, build unverified)
+Last updated: 2026-07-11 (Phase 0 closed - build verified green; Phase 1
+Core Persistence implemented and tested)
 
 ## Implemented
+
+### Phase 0 - Foundation (closed, exit criteria met)
 
 - Repository scaffold: 4 Gradle modules (`:shared`, `:domain`, `:data`,
   `:composeApp`) per ADR 0001, Kotlin Multiplatform + Compose
   Multiplatform per ADR 0002, Koin DI wiring per ADR 0003.
-- One vertical slice proving the architecture end-to-end: "System
-  Status" (trust indicators - Offline Mode, No Cloud Connected active;
-  Encrypted Storage, Local AI pending) flows
-  `composeApp -> domain (use case) -> data (repository) -> shared (Logger)`.
-- Coding standards config: ktlint + detekt (`config/detekt/detekt.yml`),
-  `.editorconfig`.
-- CI workflow (`.github/workflows/ci.yml`): installs JDK 17 + Gradle
-  8.10 directly (not via wrapper, see below), runs ktlintCheck, detekt,
-  allTests, assemble.
-- 3 ADRs recorded (`docs/adr/0001`-`0003`), indexed in
-  `26-...` -> see `24-adr-index.md`.
+- Real toolchain verified on 2026-07-11: JDK 25.0.3, Android SDK
+  (platform 36 / API 36.1 extension 20, build-tools 37.0.0), Gradle
+  9.6.1 (wrapper jar generated and committed), AGP 9.2.1 with
+  compatibility flags (ADR 0004), Kotlin 2.4.0, Compose Multiplatform
+  1.11.1, Koin 4.2.2 - all bumped from Phase 0's originally-guessed
+  versions and verified against Maven Central/Google Maven.
+- `./gradlew ktlintCheck detekt allTests assemble` passes for both
+  Android (`:composeApp:assembleDebug`) and Desktop targets.
+- 5 ADRs recorded (`docs/adr/0001`-`0005`), indexed in
+  `24-adr-index.md`.
+
+### Phase 1 - Core Persistence (implemented and tested)
+
+- Encrypted database: SQLDelight 2.3.2 + SQLCipher (ADR 0005).
+  `OpfisDatabase` (`com.opfis.data.db`) with a `system_status_indicator`
+  table (id, label, state, created_at, updated_at, version - matching
+  SystemPrompt Part 2's per-table audit metadata requirement).
+- Platform driver factories (`DatabaseDriverFactory` expect/actual,
+  `:data`): Android uses `AndroidSqliteDriver` +
+  `net.zetetic:android-database-sqlcipher`'s `SupportFactory`; Desktop
+  uses `JdbcSqliteDriver` + `io.github.willena:sqlite-jdbc` in
+  SQLCipher-4-compatible mode (`SQLiteMCSqlCipherConfig.getV4Defaults()`).
+- Encryption key provider (`DatabaseKeyProvider` expect/actual):
+  Android via `androidx.security.crypto` `EncryptedSharedPreferences`
+  (Keystore-backed); Desktop via a random key written once to a file in
+  `~/.opfis` (Phase 8 hardens this - see ADR 0005 follow-up).
+- `PersistentSystemStatusRepository` replaces Phase 0's static
+  `LocalSystemStatusRepository`: seeds default trust indicators once,
+  observes them via a SQLDelight `Flow`. `encrypted_storage` now
+  reports ACTIVE (was PENDING in Phase 0) because the encryption is
+  real.
+- Migration system: SQLDelight versioned `.sqm` migrations
+  (`data/src/commonMain/sqldelight/migrations/1.sqm`), auto-applied by
+  the schema-aware driver factory function on open.
+- Backup interfaces: `BackupPort` (`:domain`), implemented by
+  `FileBackupPort` (`:data`, Android and Desktop) using SQLite
+  `VACUUM INTO` for consistent export and a file copy for restore.
+  Full CSV/JSON import-export and restore UX remain Phase 9 scope.
+- Tests (all real, no mocks, run via `:data:desktopTest` against the
+  actual SQLCipher-backed driver): data survives close/reopen with the
+  same passphrase; a wrong passphrase cannot read previously written
+  data; a v1 (pre-migration) database auto-migrates to the current
+  schema on open with data intact; backup export/restore round-trips
+  data through `FileBackupPort`. All 7 new tests pass.
 
 ## Known gaps / not yet verified
 
-- **No local build has been run.** This machine has no JDK, and the
-  Android SDK at `D:\AndroidSDK` is outdated (max platform 29, no
-  `cmdline-tools`/`sdkmanager`, build-tools max 30.0.0-rc2) and cannot
-  build a Compose Multiplatform / AGP 8.7 project as scaffolded. The
-  sandboxed shell also has no outbound internet access (verified by a
-  hung `curl` to services.gradle.org), so dependency resolution
-  couldn't be exercised either.
-- **`gradle/wrapper/gradle-wrapper.jar` is not committed.** It is a
-  binary; generating a correct one requires an actual Gradle/JDK
-  install, which isn't available here. `gradle/wrapper/gradle-wrapper.properties`
-  is in place (pins Gradle 8.10). See README "Toolchain setup" for the
-  one-time `gradle wrapper --gradle-version 8.10` step required before
-  `./gradlew` will work.
-- Because of the above, dependency versions in `gradle/libs.versions.toml`
-  are believed current as of 2026-07-11 but have not been resolved
-  against Maven Central - verify and bump on first real sync.
-- Phase 0 exit criteria ("build passes") is therefore **not yet met**.
-  Everything else in Phase 0's scope (scaffold, DI, design-system seed,
-  CI config, ADRs, initial tests) is implemented and reviewable.
+- Android's encrypted driver path (`AndroidSqliteDriver` +
+  `SupportFactory`) compiles and `:composeApp:assembleDebug` succeeds,
+  but there is no Android emulator/device in this environment, so the
+  actual on-device encrypted read/write behavior is not exercised by an
+  instrumented test - only Desktop's equivalent path is (ADR 0005
+  follow-up).
+- `androidx.security.crypto`'s `EncryptedSharedPreferences`/`MasterKey`
+  are flagged deprecated by the library itself as of the version used
+  (1.1.0, the latest stable on Maven Central as of 2026-07-11) - revisit
+  the replacement API when Phase 8 designs biometric/auto-lock gating.
+- Desktop's encryption key file (`~/.opfis/.opfis_db_key`) has no
+  OS-keychain protection yet - documented, intentional Phase 1 scope
+  boundary (ADR 0005), not an oversight.
+- AGP 9's `android.builtInKotlin=false`/`android.newDsl=false`
+  compatibility flags (ADR 0004) are a deprecated-but-working path;
+  must be revisited before any AGP 10.0 upgrade.
 
 ## Pending
 
-- First real build/sync, on a machine with JDK 17+ and a current
-  Android SDK, to confirm the scaffold actually compiles - this is the
-  immediate next step before Phase 0 can be marked complete.
-- Everything in Phase 1 onward (see `04-roadmap.md` / `ROADMAP.md`).
+- Phase 2 onward (see `04-roadmap.md` / `ROADMAP.md`), starting with
+  Phase 2 (Financial Domain: accounts, assets, liabilities,
+  transactions, categories, budgets, goals) - not started, pending
+  explicit approval per the phase-execution policy.

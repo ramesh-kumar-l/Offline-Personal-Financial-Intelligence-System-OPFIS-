@@ -9,11 +9,17 @@ composeApp/   Presentation layer + composition root
 domain/       Domain + Application layers (pure Kotlin, no framework deps)
   src/commonMain/kotlin/com/opfis/domain/<feature>/            entities, repository interfaces
   src/commonMain/kotlin/com/opfis/domain/<feature>/usecase/    use cases
+  src/commonMain/kotlin/com/opfis/domain/backup/                BackupPort (Phase 1)
   src/commonTest/                                               unit tests (fakes, no DI container)
 
 data/         Infrastructure layer
   src/commonMain/kotlin/com/opfis/data/<feature>/   repository implementations
+  src/commonMain/kotlin/com/opfis/data/db/          DatabaseDriverFactory/DatabaseKeyProvider (expect), OpfisDatabase
   src/commonMain/kotlin/com/opfis/data/di/          Koin module (dataModule)
+  src/commonMain/sqldelight/                        .sq schema + migrations/*.sqm (Phase 1, ADR 0005)
+  src/androidMain/kotlin/com/opfis/data/            SQLCipher/EncryptedSharedPreferences actuals, androidDataModule
+  src/desktopMain/kotlin/com/opfis/data/            SQLite3MultipleCiphers actuals, desktopDataModule
+  src/desktopTest/kotlin/com/opfis/data/            real (non-mocked) encrypted DB tests
 
 shared/       Cross-cutting kernel, zero dependencies
   src/commonMain/   ports (e.g. logging/Logger.kt with `expect fun platformLogger()`)

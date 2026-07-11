@@ -36,6 +36,8 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
+            implementation(libs.sqlcipher.android)
+            implementation(libs.androidx.sqlite.framework)
         }
 
         val desktopMain by getting {
@@ -52,12 +54,12 @@ kotlin {
 
 android {
     namespace = "com.opfis.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.opfis"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "0.1.0-phase0"
     }

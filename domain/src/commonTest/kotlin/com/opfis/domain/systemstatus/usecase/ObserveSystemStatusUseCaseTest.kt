@@ -18,22 +18,24 @@ private class FakeSystemStatusRepository(
 }
 
 class ObserveSystemStatusUseCaseTest {
-
     @Test
-    fun `invoke emits the status produced by the repository`() = runTest {
-        val expected = SystemStatus(
-            indicators = listOf(
-                TrustIndicator(
-                    id = "offline_mode",
-                    label = "Offline Mode",
-                    state = TrustIndicatorState.ACTIVE,
-                ),
-            ),
-        )
-        val useCase = ObserveSystemStatusUseCase(FakeSystemStatusRepository(expected))
+    fun `invoke emits the status produced by the repository`() =
+        runTest {
+            val expected =
+                SystemStatus(
+                    indicators =
+                        listOf(
+                            TrustIndicator(
+                                id = "offline_mode",
+                                label = "Offline Mode",
+                                state = TrustIndicatorState.ACTIVE,
+                            ),
+                        ),
+                )
+            val useCase = ObserveSystemStatusUseCase(FakeSystemStatusRepository(expected))
 
-        val actual = useCase().first()
+            val actual = useCase().first()
 
-        assertEquals(expected, actual)
-    }
+            assertEquals(expected, actual)
+        }
 }

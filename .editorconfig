@@ -12,9 +12,17 @@ indent_size = 4
 indent_size = 4
 max_line_length = 120
 ktlint_standard_filename = disabled
+ktlint_function_naming_ignore_when_annotated_with = Composable
 
 [*.{yml,yaml,json,toml}]
 indent_size = 2
 
 [*.md]
 trim_trailing_whitespace = false
+
+# Compose Multiplatform generates resource-accessor Kotlin under build/generated;
+# it isn't hand-written and the Gradle-level ktlint source-set filter doesn't
+# reliably reach the commonMain-merged source set for it (ktlint-gradle 14.2.0),
+# so disable ktlint at the engine level for anything under a generated/ dir.
+[**/generated/**/*.kt]
+ktlint = disabled
