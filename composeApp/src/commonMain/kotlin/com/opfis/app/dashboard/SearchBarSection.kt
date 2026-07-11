@@ -11,15 +11,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.opfis.app.format.MoneyFormatter
-import com.opfis.app.theme.OpfisColors
+import com.opfis.app.search.SearchResultRow
 import com.opfis.domain.search.SearchResult
 
 /**
- * Dashboard search entry point (ROADMAP Phase 3: "Search entry").
- * Deliberately simple, in-memory substring matching - global full-text
- * search with filters/tags/timeline is Phase 4 ("Search") scope, see
- * `14-search-engine.md`.
+ * Dashboard search entry point (ROADMAP Phase 3: "Search entry"),
+ * backed by SQLite FTS5 since Phase 4. Filters, tags, and the timeline
+ * browse live in the full Search screen (`com.opfis.app.search`).
  */
 @Composable
 fun SearchBarSection(
@@ -48,19 +46,4 @@ fun SearchBarSection(
             }
         }
     }
-}
-
-@Composable
-private fun SearchResultRow(result: SearchResult) {
-    val (label, tint) =
-        when (result) {
-            is SearchResult.AccountMatch -> "Account: ${result.account.name}" to OpfisColors.ProfessionalBlue
-            is SearchResult.CategoryMatch -> "Category: ${result.category.name}" to OpfisColors.InformationNeutralBlue
-            is SearchResult.TransactionMatch ->
-                "Transaction: ${result.transaction.description} (${MoneyFormatter.format(
-                    result.transaction.amountMinorUnits,
-                )})" to
-                    OpfisColors.ProfessionalBlue
-        }
-    Text(label, style = MaterialTheme.typography.bodyMedium, color = tint)
 }

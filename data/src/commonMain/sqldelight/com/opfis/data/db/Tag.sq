@@ -1,0 +1,21 @@
+CREATE TABLE tag (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    color_hex TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+selectAll:
+SELECT * FROM tag ORDER BY name ASC;
+
+selectById:
+SELECT * FROM tag WHERE id = ?;
+
+insertOrReplace:
+INSERT OR REPLACE INTO tag (id, name, color_hex, created_at, updated_at, version)
+VALUES (?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM tag WHERE id = ?;

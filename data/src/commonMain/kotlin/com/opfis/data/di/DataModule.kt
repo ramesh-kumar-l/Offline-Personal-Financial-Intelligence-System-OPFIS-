@@ -6,7 +6,10 @@ import com.opfis.data.budget.SqlBudgetRepository
 import com.opfis.data.category.SqlCategoryRepository
 import com.opfis.data.goal.SqlGoalRepository
 import com.opfis.data.liability.SqlLiabilityRepository
+import com.opfis.data.search.SqlSearchIndexRepository
 import com.opfis.data.systemstatus.PersistentSystemStatusRepository
+import com.opfis.data.tag.SqlTagRepository
+import com.opfis.data.tag.SqlTransactionTagRepository
 import com.opfis.data.transaction.SqlFinancialLedger
 import com.opfis.data.transaction.SqlTransactionRepository
 import com.opfis.domain.account.AccountRepository
@@ -15,7 +18,10 @@ import com.opfis.domain.budget.BudgetRepository
 import com.opfis.domain.category.CategoryRepository
 import com.opfis.domain.goal.GoalRepository
 import com.opfis.domain.liability.LiabilityRepository
+import com.opfis.domain.search.SearchPort
 import com.opfis.domain.systemstatus.SystemStatusRepository
+import com.opfis.domain.tag.TagRepository
+import com.opfis.domain.tag.TransactionTagRepository
 import com.opfis.domain.transaction.FinancialLedgerPort
 import com.opfis.domain.transaction.TransactionRepository
 import com.opfis.shared.logging.Logger
@@ -43,4 +49,7 @@ val dataModule =
         singleOf(::SqlGoalRepository) { bind<GoalRepository>() }
         singleOf(::SqlTransactionRepository) { bind<TransactionRepository>() }
         singleOf(::SqlFinancialLedger) { bind<FinancialLedgerPort>() }
+        singleOf(::SqlTagRepository) { bind<TagRepository>() }
+        singleOf(::SqlTransactionTagRepository) { bind<TransactionTagRepository>() }
+        singleOf(::SqlSearchIndexRepository) { bind<SearchPort>() }
     }

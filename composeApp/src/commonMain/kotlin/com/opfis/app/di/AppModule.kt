@@ -22,6 +22,13 @@ import com.opfis.domain.liability.usecase.UpsertLiabilityUseCase
 import com.opfis.domain.networth.usecase.ObserveNetWorthUseCase
 import com.opfis.domain.search.usecase.SearchFinancialRecordsUseCase
 import com.opfis.domain.systemstatus.usecase.ObserveSystemStatusUseCase
+import com.opfis.domain.tag.usecase.AssignTagToTransactionUseCase
+import com.opfis.domain.tag.usecase.DeleteTagUseCase
+import com.opfis.domain.tag.usecase.ObserveTagsUseCase
+import com.opfis.domain.tag.usecase.ObserveTransactionTagsUseCase
+import com.opfis.domain.tag.usecase.RemoveTagFromTransactionUseCase
+import com.opfis.domain.tag.usecase.UpsertTagUseCase
+import com.opfis.domain.timeline.usecase.ObserveTimelineUseCase
 import com.opfis.domain.transaction.usecase.DeleteTransactionUseCase
 import com.opfis.domain.transaction.usecase.ObserveAccountTransactionsUseCase
 import com.opfis.domain.transaction.usecase.ObserveRecentTransactionsUseCase
@@ -68,11 +75,17 @@ val appModule =
             )
         }
         factory { ObserveCashFlowUseCase(transactionRepository = get()) }
+        factory { SearchFinancialRecordsUseCase(searchPort = get()) }
+        factory { ObserveTagsUseCase(repository = get()) }
+        factory { UpsertTagUseCase(repository = get()) }
+        factory { DeleteTagUseCase(repository = get()) }
+        factory { ObserveTransactionTagsUseCase(repository = get()) }
+        factory { AssignTagToTransactionUseCase(repository = get()) }
+        factory { RemoveTagFromTransactionUseCase(repository = get()) }
         factory {
-            SearchFinancialRecordsUseCase(
-                accountRepository = get(),
-                categoryRepository = get(),
+            ObserveTimelineUseCase(
                 transactionRepository = get(),
+                transactionTagRepository = get(),
             )
         }
     }

@@ -6,11 +6,9 @@ import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.opfis.data.db.OpfisDatabase
 import com.opfis.domain.account.Account
 import com.opfis.domain.account.AccountRepository
-import com.opfis.domain.account.AccountType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import com.opfis.data.db.Account as AccountRow
 
 class SqlAccountRepository(
     private val database: OpfisDatabase,
@@ -20,14 +18,14 @@ class SqlAccountRepository(
             .selectAll()
             .asFlow()
             .mapToList(Dispatchers.Default)
-            .map { rows -> rows.map(::toDomain) }
+            .map { rows -> rows.map(::toDomainAccount) }
 
     override fun observeById(id: String): Flow<Account?> =
         database.accountQueries
             .selectById(id)
             .asFlow()
             .mapToOneOrNull(Dispatchers.Default)
-            .map { row -> row?.let(::toDomain) }
+            .map { row -> row?.let(::toDomainAccount) }
 
     override suspend fun upsert(account: Account) {
         val existingVersion =
@@ -50,15 +48,4 @@ class SqlAccountRepository(
     override suspend fun delete(id: String) {
         database.accountQueries.deleteById(id)
     }
-
-    private fun toDomain(row: AccountRow): Account =
-        Account(
-            id = row.id,
-            name = row.name,
-            type = AccountType.valueOf(row.type),
-            balanceMinorUnits = row.balance_minor_units,
-            isArchived = row.is_archived == 1L,
-            createdAt = row.created_at,
-            updatedAt = row.updated_at,
-        )
 }

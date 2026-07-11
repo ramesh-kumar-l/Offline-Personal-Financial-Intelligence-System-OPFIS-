@@ -1,0 +1,63 @@
+CREATE TABLE tag (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    color_hex TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE transaction_tag (
+    transaction_id TEXT NOT NULL,
+    tag_id TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (transaction_id, tag_id)
+);
+
+CREATE INDEX transaction_tag_tag_id ON transaction_tag (tag_id);
+
+CREATE VIRTUAL TABLE search_index USING fts5(
+    entity_type UNINDEXED,
+    entity_id UNINDEXED,
+    text
+);
+
+INSERT INTO search_index(entity_type, entity_id, text) SELECT 'ACCOUNT', id, name FROM account;
+INSERT INTO search_index(entity_type, entity_id, text) SELECT 'CATEGORY', id, name FROM category;
+INSERT INTO search_index(entity_type, entity_id, text) SELECT 'TRANSACTION', id, description FROM financial_transaction;
+
+CREATE TRIGGER account_search_ai AFTER INSERT ON account BEGIN
+    DELETE FROM search_index WHERE entity_type = 'ACCOUNT' AND entity_id = new.id;
+    INSERT INTO search_index(entity_type, entity_id, text) VALUES ('ACCOUNT', new.id, new.name);
+END;
+
+CREATE TRIGGER account_search_ad AFTER DELETE ON account BEGIN
+    DELETE FROM search_index WHERE entity_type = 'ACCOUNT' AND entity_id = old.id;
+END;
+
+CREATE TRIGGER category_search_ai AFTER INSERT ON category BEGIN
+    DELETE FROM search_index WHERE entity_type = 'CATEGORY' AND entity_id = new.id;
+    INSERT INTO search_index(entity_type, entity_id, text) VALUES ('CATEGORY', new.id, new.name);
+END;
+
+CREATE TRIGGER category_search_ad AFTER DELETE ON category BEGIN
+    DELETE FROM search_index WHERE entity_type = 'CATEGORY' AND entity_id = old.id;
+END;
+
+CREATE TRIGGER transaction_search_ai AFTER INSERT ON financial_transaction BEGIN
+    DELETE FROM search_index WHERE entity_type = 'TRANSACTION' AND entity_id = new.id;
+    INSERT INTO search_index(entity_type, entity_id, text) VALUES ('TRANSACTION', new.id, new.description);
+END;
+
+CREATE TRIGGER transaction_search_ad AFTER DELETE ON financial_transaction BEGIN
+    DELETE FROM search_index WHERE entity_type = 'TRANSACTION' AND entity_id = old.id;
+END;
+
+CREATE TRIGGER tag_search_ai AFTER INSERT ON tag BEGIN
+    DELETE FROM search_index WHERE entity_type = 'TAG' AND entity_id = new.id;
+    INSERT INTO search_index(entity_type, entity_id, text) VALUES ('TAG', new.id, new.name);
+END;
+
+CREATE TRIGGER tag_search_ad AFTER DELETE ON tag BEGIN
+    DELETE FROM search_index WHERE entity_type = 'TAG' AND entity_id = old.id;
+END;
