@@ -22,4 +22,5 @@ enum class SearchEntityType {
     CATEGORY,
     TRANSACTION,
     TAG,
+    DOCUMENT,
 }

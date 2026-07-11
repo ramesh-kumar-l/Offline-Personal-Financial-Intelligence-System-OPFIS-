@@ -40,6 +40,16 @@ CREATE TRIGGER tag_search_ad AFTER DELETE ON tag BEGIN
     DELETE FROM search_index WHERE entity_type = 'TAG' AND entity_id = old.id;
 END;
 
+CREATE TRIGGER document_search_ai AFTER INSERT ON document BEGIN
+    DELETE FROM search_index WHERE entity_type = 'DOCUMENT' AND entity_id = new.id;
+    INSERT INTO search_index(entity_type, entity_id, text)
+    VALUES ('DOCUMENT', new.id, new.file_name || ' ' || new.extracted_text);
+END;
+
+CREATE TRIGGER document_search_ad AFTER DELETE ON document BEGIN
+    DELETE FROM search_index WHERE entity_type = 'DOCUMENT' AND entity_id = old.id;
+END;
+
 searchAccounts:
 SELECT a.* FROM account a
 JOIN search_index si ON si.entity_type = 'ACCOUNT' AND si.entity_id = a.id
@@ -61,5 +71,11 @@ ORDER BY bm25(search_index);
 searchTags:
 SELECT tg.* FROM tag tg
 JOIN search_index si ON si.entity_type = 'TAG' AND si.entity_id = tg.id
+WHERE search_index MATCH :matchExpression
+ORDER BY bm25(search_index);
+
+searchDocuments:
+SELECT d.* FROM document d
+JOIN search_index si ON si.entity_type = 'DOCUMENT' AND si.entity_id = d.id
 WHERE search_index MATCH :matchExpression
 ORDER BY bm25(search_index);

@@ -139,6 +139,11 @@ class SchemaMigrationTest {
 
     /** Recreates the v3 schema (Phases 0-2) that migration 3.sqm upgrades from. */
     private fun createV3Schema(statement: Statement) {
+        createV3Tables(statement)
+        seedV3Data(statement)
+    }
+
+    private fun createV3Tables(statement: Statement) {
         statement.execute(
             """
             CREATE TABLE system_status_indicator (
@@ -195,6 +200,9 @@ class SchemaMigrationTest {
             )
             """.trimIndent(),
         )
+    }
+
+    private fun seedV3Data(statement: Statement) {
         statement.execute(
             "INSERT INTO account " +
                 "(id, name, type, balance_minor_units, is_archived, created_at, updated_at, version) " +

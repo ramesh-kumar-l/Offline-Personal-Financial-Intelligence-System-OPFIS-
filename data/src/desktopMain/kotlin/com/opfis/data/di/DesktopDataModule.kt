@@ -5,7 +5,11 @@ import com.opfis.data.backup.FileBackupPort
 import com.opfis.data.db.DatabaseDriverFactory
 import com.opfis.data.db.DatabaseKeyProvider
 import com.opfis.data.db.OpfisDatabase
+import com.opfis.data.document.DesktopDocumentStorage
+import com.opfis.data.document.DesktopDocumentTextExtractor
 import com.opfis.domain.backup.BackupPort
+import com.opfis.domain.document.DocumentStoragePort
+import com.opfis.domain.document.DocumentTextExtractorPort
 import org.koin.dsl.module
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -23,4 +27,6 @@ val desktopDataModule =
         single<SqlDriver> { get<DatabaseDriverFactory>().createDriver(get<DatabaseKeyProvider>().getOrCreateKey()) }
         single { OpfisDatabase(get()) }
         single<BackupPort> { FileBackupPort(get(), get<DatabaseDriverFactory>().databaseFilePath()) }
+        single<DocumentStoragePort> { DesktopDocumentStorage(get()) }
+        single<DocumentTextExtractorPort> { DesktopDocumentTextExtractor() }
     }

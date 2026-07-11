@@ -2,18 +2,15 @@
 
 ## Current phase
 
-Phase 3 - Dashboard & UX (ROADMAP.md) implemented and tested; Phases
-0-2 remain closed. Awaiting owner review/approval before Phase 4
-(Search: FTS5, global search, filters, timeline search, tags) begins -
-per the phase-execution policy in SYSTEM.md, do not start Phase 4
-autonomously.
+Phase 4 - Search (ROADMAP.md) implemented and tested; Phases 0-3 remain
+closed. Phase 5 (Document Intelligence: PDF import, image import, OCR,
+document indexing, receipt vault) now in progress per explicit owner
+instruction.
 
 ## Active tasks
 
-- Owner to review the Phase 3 implementation (dashboard UI, net worth/
-  cash flow calculators, chart design, minimal search entry point
-  documented in `02-system-architecture.md`/`14-search-engine.md`) and
-  either approve moving to Phase 4 or request changes.
+- Implement Phase 5 (Document Intelligence) - see `05-current-state.md`
+  for live status.
 - When an Android emulator/device becomes available, add an
   instrumented test for the real `AndroidSqliteDriver` + `SupportFactory`
   encrypted path (carried over from Phase 1 - still open).

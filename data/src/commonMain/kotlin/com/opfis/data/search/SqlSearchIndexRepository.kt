@@ -5,6 +5,7 @@ import app.cash.sqldelight.coroutines.mapToList
 import com.opfis.data.account.toDomainAccount
 import com.opfis.data.category.toDomainCategory
 import com.opfis.data.db.OpfisDatabase
+import com.opfis.data.document.toDomainDocument
 import com.opfis.data.tag.toDomainTag
 import com.opfis.data.transaction.toDomainTransaction
 import com.opfis.domain.search.SearchEntityType
@@ -38,8 +39,9 @@ class SqlSearchIndexRepository(
             searchCategories(matchExpression, filter),
             searchTransactions(matchExpression, filter),
             searchTags(matchExpression, filter),
-        ) { accounts, categories, transactions, tags ->
-            accounts + categories + transactions + tags
+            searchDocuments(matchExpression, filter),
+        ) { accounts, categories, transactions, tags, documents ->
+            accounts + categories + transactions + tags + documents
         }
     }
 
@@ -97,5 +99,19 @@ class SqlSearchIndexRepository(
                 .asFlow()
                 .mapToList(Dispatchers.Default)
                 .map { rows -> rows.map { SearchResult.TagMatch(toDomainTag(it)) } }
+        }
+
+    private fun searchDocuments(
+        matchExpression: String,
+        filter: SearchFilter,
+    ): Flow<List<SearchResult>> =
+        if (SearchEntityType.DOCUMENT !in filter.entityTypes) {
+            flowOf(emptyList())
+        } else {
+            database.searchIndexQueries
+                .searchDocuments(matchExpression)
+                .asFlow()
+                .mapToList(Dispatchers.Default)
+                .map { rows -> rows.map { SearchResult.DocumentMatch(toDomainDocument(it)) } }
         }
 }

@@ -2,6 +2,23 @@
 
 Last session: 2026-07-12
 
+## Completed in Phase 4 session (Search)
+
+- Implemented Phase 4 per ROADMAP.md: SQLite FTS5 (`search_index`
+  virtual table + sync triggers), global search (`SearchPort`/
+  `SqlSearchIndexRepository`), filters (`SearchFilter`), timeline search
+  (`TimelineEntry`/`ObserveTimelineUseCase`), tags (`Tag`,
+  `TransactionTagRepository`, assign/remove/observe use cases). New
+  bottom-nav `SearchScreen`. Deleted Phase 3's `FinancialSearchEngine`.
+  9 new tests, all passing. Full build gate green (`ktlintCheck detekt
+  allTests assemble`) after fixing an SQLDelight FTS5 alias compile
+  error, 3 ktlint violations, and 2 detekt `LongMethod` findings - see
+  `05-current-state.md`/`14-search-engine.md` for detail. Memory bank
+  updated: `02-system-architecture.md`, `03-domain-model.md`,
+  `04-roadmap.md`, `05-current-state.md`, `07-repository-structure.md`,
+  `14-search-engine.md`, `18-ui-design-system.md`,
+  `26-active-initiatives.md`, this file. Committed as `25b7815`.
+
 ## Completed this session
 
 - Implemented Phase 3 (Dashboard & UX) per ROADMAP.md: Dashboard, Net

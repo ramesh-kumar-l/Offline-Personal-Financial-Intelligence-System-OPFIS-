@@ -25,6 +25,8 @@ fun SearchResultRow(result: SearchResult) {
                 )})" to
                     OpfisColors.ProfessionalBlue
             is SearchResult.TagMatch -> "Tag: ${result.tag.name}" to OpfisColors.Warning
+            is SearchResult.DocumentMatch ->
+                "Document: ${result.document.fileName}" to OpfisColors.InformationNeutralBlue
         }
     Text(label, style = MaterialTheme.typography.bodyMedium, color = tint)
 }

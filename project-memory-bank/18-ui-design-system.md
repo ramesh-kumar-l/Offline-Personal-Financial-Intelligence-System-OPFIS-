@@ -18,3 +18,15 @@ currency symbol - consistent with the single-currency decision).
 `dataviz` skill's `validate_palette.js` could not run in this
 environment (no `node`); the existing icon+text+color convention is the
 practical substitute for a formal CVD check.
+
+## Phase 4 - Search & navigation
+
+`App.kt` now hosts a bottom `NavigationBar` (unicode glyph markers, no
+Material Icons dependency, consistent with the rest of the app)
+switching between `DashboardScreen` and the new `SearchScreen`.
+`SearchScreen` (state/wiring) + `SearchScreenBody` (layout) show a
+query field, an entity-type filter bar, tag filter chips, and either
+the FTS5 global-results list (query non-blank) or a chronological,
+taggable `TimelineSection` (query blank). Timeline rows use "▲"/"▼"/"⇄"
+markers for income/expense/transfer (paired with color, never color
+alone) and "#tagname ✕" text buttons to remove an assigned tag.

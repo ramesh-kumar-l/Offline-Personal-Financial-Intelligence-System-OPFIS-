@@ -1,0 +1,25 @@
+CREATE TABLE document (
+    id TEXT NOT NULL PRIMARY KEY,
+    file_name TEXT NOT NULL,
+    storage_path TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    document_type TEXT NOT NULL,
+    extracted_text TEXT NOT NULL DEFAULT '',
+    linked_transaction_id TEXT,
+    imported_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE INDEX document_linked_transaction_id ON document (linked_transaction_id);
+
+CREATE TRIGGER document_search_ai AFTER INSERT ON document BEGIN
+    DELETE FROM search_index WHERE entity_type = 'DOCUMENT' AND entity_id = new.id;
+    INSERT INTO search_index(entity_type, entity_id, text)
+    VALUES ('DOCUMENT', new.id, new.file_name || ' ' || new.extracted_text);
+END;
+
+CREATE TRIGGER document_search_ad AFTER DELETE ON document BEGIN
+    DELETE FROM search_index WHERE entity_type = 'DOCUMENT' AND entity_id = old.id;
+END;

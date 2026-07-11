@@ -86,6 +86,30 @@ class SqlSearchIndexRepositoryTest {
         }
 
     @Test
+    fun `finds a document by its extracted text`() =
+        runTest {
+            val database = testDatabase()
+            database.documentQueries.insertOrReplace(
+                id = "doc-1",
+                file_name = "receipt.pdf",
+                storage_path = "/documents/doc-1.pdf",
+                mime_type = "application/pdf",
+                document_type = "RECEIPT",
+                extracted_text = "Coffee shop total 4.50",
+                linked_transaction_id = null,
+                imported_at = 0L,
+                created_at = 0L,
+                updated_at = 0L,
+                version = 1L,
+            )
+
+            val results = SqlSearchIndexRepository(database).search("coffee", SearchFilter.All).first()
+
+            assertEquals(1, results.size)
+            assertTrue(results.single() is SearchResult.DocumentMatch)
+        }
+
+    @Test
     fun `deleting the source row removes it from search results`() =
         runTest {
             val database = testDatabase()

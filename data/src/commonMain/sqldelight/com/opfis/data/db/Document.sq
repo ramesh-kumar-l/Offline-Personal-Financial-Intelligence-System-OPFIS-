@@ -1,0 +1,36 @@
+CREATE TABLE document (
+    id TEXT NOT NULL PRIMARY KEY,
+    file_name TEXT NOT NULL,
+    storage_path TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    document_type TEXT NOT NULL,
+    extracted_text TEXT NOT NULL DEFAULT '',
+    linked_transaction_id TEXT,
+    imported_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE INDEX document_linked_transaction_id ON document (linked_transaction_id);
+
+selectAll:
+SELECT * FROM document ORDER BY imported_at DESC;
+
+selectById:
+SELECT * FROM document WHERE id = ?;
+
+selectByTransaction:
+SELECT * FROM document WHERE linked_transaction_id = ? ORDER BY imported_at DESC;
+
+insertOrReplace:
+INSERT OR REPLACE INTO document
+    (id, file_name, storage_path, mime_type, document_type, extracted_text, linked_transaction_id,
+     imported_at, created_at, updated_at, version)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM document WHERE id = ?;
+
+updateLinkedTransaction:
+UPDATE document SET linked_transaction_id = ?, updated_at = ? WHERE id = ?;

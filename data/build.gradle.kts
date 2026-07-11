@@ -31,6 +31,7 @@ kotlin {
             implementation(libs.androidx.security.crypto)
             implementation(libs.androidx.sqlite.framework)
             implementation(libs.koin.android)
+            implementation(libs.mlkit.text.recognition)
         }
         val desktopMain by getting {
             dependencies {
@@ -38,6 +39,8 @@ kotlin {
                     exclude(group = "org.xerial", module = "sqlite-jdbc")
                 }
                 implementation(libs.sqlite.jdbc.willena)
+                implementation(libs.pdfbox)
+                implementation(libs.tess4j)
             }
         }
         val desktopTest by getting {

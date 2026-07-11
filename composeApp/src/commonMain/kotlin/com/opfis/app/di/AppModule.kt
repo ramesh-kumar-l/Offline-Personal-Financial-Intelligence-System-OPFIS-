@@ -13,6 +13,11 @@ import com.opfis.domain.cashflow.usecase.ObserveCashFlowUseCase
 import com.opfis.domain.category.usecase.DeleteCategoryUseCase
 import com.opfis.domain.category.usecase.ObserveCategoriesUseCase
 import com.opfis.domain.category.usecase.UpsertCategoryUseCase
+import com.opfis.domain.document.usecase.DeleteDocumentUseCase
+import com.opfis.domain.document.usecase.ImportDocumentUseCase
+import com.opfis.domain.document.usecase.LinkDocumentToTransactionUseCase
+import com.opfis.domain.document.usecase.ObserveDocumentsForTransactionUseCase
+import com.opfis.domain.document.usecase.ObserveDocumentsUseCase
 import com.opfis.domain.goal.usecase.DeleteGoalUseCase
 import com.opfis.domain.goal.usecase.ObserveGoalsUseCase
 import com.opfis.domain.goal.usecase.UpsertGoalUseCase
@@ -86,6 +91,17 @@ val appModule =
             ObserveTimelineUseCase(
                 transactionRepository = get(),
                 transactionTagRepository = get(),
+            )
+        }
+        factory { ObserveDocumentsUseCase(repository = get()) }
+        factory { ObserveDocumentsForTransactionUseCase(repository = get()) }
+        factory { LinkDocumentToTransactionUseCase(repository = get()) }
+        factory { DeleteDocumentUseCase(repository = get(), storage = get()) }
+        factory {
+            ImportDocumentUseCase(
+                documentRepository = get(),
+                storage = get(),
+                textExtractor = get(),
             )
         }
     }

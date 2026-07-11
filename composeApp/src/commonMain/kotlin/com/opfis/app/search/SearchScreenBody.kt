@@ -22,23 +22,34 @@ import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+/** [SearchScreen]'s already-collected state, grouped to keep [SearchScreenBody]'s parameter count in check. */
+internal data class SearchScreenState(
+    val query: String,
+    val filter: SearchFilter,
+    val tags: List<Tag>,
+    val searchResults: List<SearchResult>,
+    val timeline: List<TimelineEntry>,
+)
+
+/** [SearchScreen]'s callbacks, grouped to keep [SearchScreenBody]'s parameter count in check. */
+internal data class SearchScreenActions(
+    val onQueryChange: (String) -> Unit,
+    val onFilterChange: (SearchFilter) -> Unit,
+    val onAssignTag: (transactionId: String, tagId: String) -> Unit,
+    val onRemoveTag: (transactionId: String, tagId: String) -> Unit,
+    val onCreateTag: (Tag) -> Unit,
+    val onDeleteTag: (String) -> Unit,
+)
+
 /** Renders [SearchScreen]'s layout given already-collected state and callbacks. */
 @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 @Composable
 internal fun SearchScreenBody(
     padding: PaddingValues,
-    query: String,
-    onQueryChange: (String) -> Unit,
-    filter: SearchFilter,
-    onFilterChange: (SearchFilter) -> Unit,
-    tags: List<Tag>,
-    searchResults: List<SearchResult>,
-    timeline: List<TimelineEntry>,
-    onAssignTag: (transactionId: String, tagId: String) -> Unit,
-    onRemoveTag: (transactionId: String, tagId: String) -> Unit,
-    onCreateTag: (Tag) -> Unit,
-    onDeleteTag: (String) -> Unit,
+    state: SearchScreenState,
+    actions: SearchScreenActions,
 ) {
+    val (query, filter, tags, searchResults, timeline) = state
     Column(
         modifier =
             Modifier
@@ -50,34 +61,39 @@ internal fun SearchScreenBody(
     ) {
         OutlinedTextField(
             value = query,
-            onValueChange = onQueryChange,
+            onValueChange = actions.onQueryChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Search accounts, categories, transactions, tags") },
             singleLine = true,
         )
-        SearchFilterBar(filter = filter, onFilterChange = onFilterChange)
+        SearchFilterBar(filter = filter, onFilterChange = actions.onFilterChange)
         TagFilterRow(
             tags = tags,
             selectedTagIds = filter.tagIds,
             onToggleTag = { tagId ->
                 val updated = if (tagId in filter.tagIds) filter.tagIds - tagId else filter.tagIds + tagId
-                onFilterChange(filter.copy(tagIds = updated))
+                actions.onFilterChange(filter.copy(tagIds = updated))
             },
         )
 
         if (query.isNotBlank()) {
             GlobalSearchResultsList(query = query, results = searchResults)
         } else {
-            TimelineSection(entries = timeline, tags = tags, onAssignTag = onAssignTag, onRemoveTag = onRemoveTag)
+            TimelineSection(
+                entries = timeline,
+                tags = tags,
+                onAssignTag = actions.onAssignTag,
+                onRemoveTag = actions.onRemoveTag,
+            )
         }
 
         TagManagementSection(
             tags = tags,
             onCreateTag = { name ->
                 val now = Clock.System.now().toEpochMilliseconds()
-                onCreateTag(Tag(id = Uuid.random().toString(), name = name, createdAt = now, updatedAt = now))
+                actions.onCreateTag(Tag(id = Uuid.random().toString(), name = name, createdAt = now, updatedAt = now))
             },
-            onDeleteTag = onDeleteTag,
+            onDeleteTag = actions.onDeleteTag,
         )
     }
 }

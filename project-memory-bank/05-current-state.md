@@ -1,7 +1,7 @@
 # Current State
 
-Last updated: 2026-07-12 (Phases 0-2 closed; Phase 3 Dashboard & UX
-implemented and tested)
+Last updated: 2026-07-12 (Phases 0-3 closed; Phase 4 Search implemented
+and tested)
 
 ## Implemented
 
@@ -98,6 +98,57 @@ implemented and tested)
   chart-drawing geometry params into small data classes/`Rect` and
   collapsing a test helper's year/month/day into one `occurredAt`.)
 
+### Phase 4 - Search (implemented and tested)
+
+- Schema v4 (`migrations/3.sqm`): `tag` table, `transaction_tag` join
+  table, and a `search_index` FTS5 virtual table
+  (`entity_type UNINDEXED, entity_id UNINDEXED, text`) kept in sync via
+  one `AFTER INSERT` (delete-then-insert) and one `AFTER DELETE` trigger
+  per source table (account/category/financial_transaction/tag) - no
+  `AFTER UPDATE` trigger needed since the app only ever uses
+  `INSERT OR REPLACE`. Backfilled for pre-existing rows on migration.
+- Domain: `Tag` entity + `TagRepository`/`TransactionTagRepository`
+  ports and use cases (Observe/Upsert/Delete tag, assign/remove/observe
+  transaction tags); `SearchFilter` (entity-type set, tag-id set,
+  occurred-at range) and `SearchPort` (replaces `FinancialSearchEngine`);
+  `SearchResult` gained `TagMatch`; `SearchFinancialRecordsUseCase`
+  rewritten to fan a query `Flow<String>` and a `SearchFilter` `Flow`
+  into `SearchPort.search()` via `combine`+`flatMapLatest`; new
+  `TimelineEntry` + `ObserveTimelineUseCase` (chronological transaction
+  browse with tag map, filterable) for the blank-query state - see
+  `14-search-engine.md`.
+- Data: `SqlSearchIndexRepository` runs the FTS5 `MATCH`/`bm25()`
+  queries (one per entity type, unioned client-side per
+  `SearchFilter.entityTypes`) - `MATCH`/`bm25()` must reference the
+  virtual table's real name, never a query alias, which is now a
+  documented hard requirement (SQLDelight's SQLite dialect parser
+  rejects the alias form). `SqlTagRepository`,
+  `SqlTransactionTagRepository`, `FtsQueryBuilder` (query-string
+  escaping/prefix-matching). Extracted `AccountMapper`/`CategoryMapper`/
+  `TagMapper` (top-level `internal fun toDomainX`) so both an entity's
+  own repository and `SqlSearchIndexRepository` share one mapping
+  function per entity.
+- Presentation: new `composeApp/.../search/SearchScreen` (+
+  `SearchScreenBody`, filter bar, tag filter chips, tag management,
+  global-results list, timeline section with per-row tag assign/remove)
+  and bottom `NavigationBar` in `App.kt` switching between
+  `DashboardScreen` and `SearchScreen`. First use of
+  `kotlin.uuid.Uuid.random()` for client-side id generation (creating a
+  `Tag` from the UI), resolving the "no ID-generation strategy" gap.
+- Tests: 3 new domain unit-test files (`TagTest`,
+  `ObserveTimelineUseCaseTest`, `SearchFinancialRecordsUseCaseTest`) + 3
+  new data integration-test files (`SqlTagRepositoryTest`,
+  `SqlTransactionTagRepositoryTest`, `SqlSearchIndexRepositoryTest`) + a
+  3rd `SchemaMigrationTest` case (v3 -> v4 adds tag/search tables and
+  backfills existing rows). All pass; every new/modified file is under
+  300 lines (largest: `SchemaMigrationTest.kt` at 205, after extracting
+  a `createV3Schema` helper to clear a detekt `LongMethod` finding).
+- Full build gate (`ktlintCheck detekt allTests assemble`) green after
+  fixing: one SQLDelight FTS5 alias compile error (see above), 3 ktlint
+  formatting violations, 2 detekt `LongMethod` findings (fixed by
+  extracting `createV3Schema` and splitting `SearchScreen` into
+  `SearchScreen`/`SearchScreenBody`).
+
 ## Known gaps / not yet verified
 
 - Android's encrypted driver path has no instrumented test (no
@@ -119,14 +170,16 @@ implemented and tested)
   plain columns, not declared FK constraints.
 - No historical net-worth snapshots exist, so Phase 3 deliberately has
   no "net worth trend" chart (would require fabricating data).
-- `FinancialSearchEngine` is in-memory substring search only - no
-  ranking, filters, or tags; that is explicitly Phase 4 scope.
 - `dataviz` skill's `validate_palette.js` could not run (no `node` in
   this environment) - chart palette relies on the project's existing
   icon+text+color convention instead of a formal CVD validation run.
+- Phase 4's `SearchFilter.tagIds`/date-range fields deliberately apply
+  only to the Timeline browse, not the FTS5 global-text-search port -
+  text relevance vs. browsing are treated as separate concerns by
+  design, not an oversight.
 
 ## Pending
 
-- Phase 4 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 4 "Search"
-  (SQLite FTS5, global search, filters, timeline search, tags) - not
-  started, pending explicit approval per the phase-execution policy.
+- Phase 5 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 5
+  "Document Intelligence" (PDF import, image import, OCR, document
+  indexing, receipt vault) - in progress, see this file's next update.

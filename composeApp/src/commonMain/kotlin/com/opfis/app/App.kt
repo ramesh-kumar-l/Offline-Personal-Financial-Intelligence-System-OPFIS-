@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.opfis.app.dashboard.DashboardScreen
+import com.opfis.app.document.DocumentVaultScreen
 import com.opfis.app.navigation.AppDestination
 import com.opfis.app.search.SearchScreen
 import com.opfis.app.theme.OpfisTheme
@@ -40,6 +41,7 @@ fun App() {
                 when (destination) {
                     AppDestination.Dashboard -> DashboardScreen()
                     AppDestination.Search -> SearchScreen()
+                    AppDestination.Vault -> DocumentVaultScreen()
                 }
             }
         }

@@ -60,17 +60,16 @@ fun SearchScreen() {
     Scaffold(topBar = { TopAppBar(title = { Text("Search") }) }) { padding ->
         SearchScreenBody(
             padding = padding,
-            query = query,
-            onQueryChange = { query = it },
-            filter = filter,
-            onFilterChange = { filter = it },
-            tags = tags,
-            searchResults = searchResults,
-            timeline = timeline,
-            onAssignTag = { transactionId, tagId -> scope.launch { assignTag(transactionId, tagId) } },
-            onRemoveTag = { transactionId, tagId -> scope.launch { removeTag(transactionId, tagId) } },
-            onCreateTag = { tag -> scope.launch { upsertTag(tag) } },
-            onDeleteTag = { tagId -> scope.launch { deleteTag(tagId) } },
+            state = SearchScreenState(query, filter, tags, searchResults, timeline),
+            actions =
+                SearchScreenActions(
+                    onQueryChange = { query = it },
+                    onFilterChange = { filter = it },
+                    onAssignTag = { transactionId, tagId -> scope.launch { assignTag(transactionId, tagId) } },
+                    onRemoveTag = { transactionId, tagId -> scope.launch { removeTag(transactionId, tagId) } },
+                    onCreateTag = { tag -> scope.launch { upsertTag(tag) } },
+                    onDeleteTag = { tagId -> scope.launch { deleteTag(tagId) } },
+                ),
         )
     }
 }

@@ -74,3 +74,16 @@ database tables:
 No historical net-worth snapshots exist, so there is deliberately no
 "net worth trend" chart in Phase 3 (would require fabricating data
 SystemPrompt Part 3 forbids this).
+
+## Phase 4 additions
+
+- **Tag** (`tag/`) - `id, name, colorHex?, createdAt, updatedAt`.
+  Assigned to transactions via a many-to-many `transaction_tag` join
+  table (`TransactionTagRepository`: assign/unassign/observeForTransaction).
+  Client-generated id via `kotlin.uuid.Uuid.random()` (first use of a
+  UUID-based id strategy in this project - see `02-system-architecture.md`).
+- **SearchResult** gained `TagMatch`; `SearchFilter` (`entityTypes`,
+  `tagIds`, `occurredFrom`/`occurredTo`) narrows a `SearchPort` query or
+  the new **TimelineEntry** (`timeline/`) chronological browse - see
+  `14-search-engine.md` for the FTS5 mechanics and the deliberate
+  tag/date-filter scope cut (timeline-only, not global text search).

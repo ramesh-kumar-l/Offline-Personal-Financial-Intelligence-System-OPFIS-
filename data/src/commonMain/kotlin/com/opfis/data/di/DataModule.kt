@@ -4,6 +4,7 @@ import com.opfis.data.account.SqlAccountRepository
 import com.opfis.data.asset.SqlAssetRepository
 import com.opfis.data.budget.SqlBudgetRepository
 import com.opfis.data.category.SqlCategoryRepository
+import com.opfis.data.document.SqlDocumentRepository
 import com.opfis.data.goal.SqlGoalRepository
 import com.opfis.data.liability.SqlLiabilityRepository
 import com.opfis.data.search.SqlSearchIndexRepository
@@ -16,6 +17,7 @@ import com.opfis.domain.account.AccountRepository
 import com.opfis.domain.asset.AssetRepository
 import com.opfis.domain.budget.BudgetRepository
 import com.opfis.domain.category.CategoryRepository
+import com.opfis.domain.document.DocumentRepository
 import com.opfis.domain.goal.GoalRepository
 import com.opfis.domain.liability.LiabilityRepository
 import com.opfis.domain.search.SearchPort
@@ -52,4 +54,5 @@ val dataModule =
         singleOf(::SqlTagRepository) { bind<TagRepository>() }
         singleOf(::SqlTransactionTagRepository) { bind<TransactionTagRepository>() }
         singleOf(::SqlSearchIndexRepository) { bind<SearchPort>() }
+        singleOf(::SqlDocumentRepository) { bind<DocumentRepository>() }
     }

@@ -51,3 +51,14 @@ changes, only new `:domain` use cases combining existing repositories.
 `systemstatus/` package (composeApp) was retired in Phase 3 - its
 `SystemStatusScreen` was deleted and its trust-indicator concept folded
 into `dashboard/TrustIndicatorsSection.kt`.
+
+Phase 4 adds: `domain/.../{tag,timeline}/` (+ `tag/usecase/`,
+`timeline/usecase/`) and `domain/.../search/{SearchFilter,SearchPort}.kt`;
+`data/.../{tag,search}/` (`SqlTagRepository`,
+`SqlTransactionTagRepository`, `SqlSearchIndexRepository`,
+`FtsQueryBuilder`) plus extracted `data/.../{account,category}/
+<Entity>Mapper.kt` top-level mapper functions; `data/.../db/` schema
+gained `Tag.sq`/`TransactionTag.sq`/`SearchIndex.sq` and
+`migrations/3.sqm`; `composeApp/.../search/` (`SearchScreen` +
+`SearchScreenBody` + filter bar/tag chips/results list/timeline
+section) and a bottom `NavigationBar` in `App.kt`.

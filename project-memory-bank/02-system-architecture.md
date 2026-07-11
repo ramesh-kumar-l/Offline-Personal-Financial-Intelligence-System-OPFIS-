@@ -88,3 +88,19 @@ colored element with an icon/marker + text label (SystemPrompt Part 3,
 "never color alone"). No third-party charting library was added. The
 old `SystemStatusScreen` (Phase 0) is retired; its trust-indicator
 concept lives on as `TrustIndicatorsSection` inside the new dashboard.
+
+## Search (Phase 4, see `14-search-engine.md`)
+
+Adds `Tag`/`TransactionTagRepository` (`:domain`) following the
+existing entity+port+use-case pattern, plus a cross-cutting
+`SearchPort` implemented by `:data`'s `SqlSearchIndexRepository`
+against a SQLite FTS5 virtual table (`search_index`) kept in sync via
+`AFTER INSERT`/`AFTER DELETE` triggers on `account`/`category`/
+`financial_transaction`/`tag`. `SearchFinancialRecordsUseCase` replaces
+Phase 3's in-memory `FinancialSearchEngine`. A new `ObserveTimelineUseCase`
+combines `TransactionRepository` and the tag assignment map for a
+chronological, filterable, taggable browse view (the blank-query state
+of the new `SearchScreen`). `composeApp/.../search/` adds bottom
+`NavigationBar`-driven navigation between `DashboardScreen` and
+`SearchScreen`. First use of `kotlin.uuid.Uuid` for client-generated
+entity ids (creating a `Tag` from the UI).
