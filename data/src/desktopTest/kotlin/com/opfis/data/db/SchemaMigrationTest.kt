@@ -52,4 +52,53 @@ class SchemaMigrationTest {
         driver.close()
         Files.deleteIfExists(dbFile)
     }
+
+    @Test
+    fun `opening a v2 database automatically adds the Phase 2 financial tables`() {
+        val dbFile = Files.createTempFile("opfis-migration-v2-test", ".db")
+        Files.deleteIfExists(dbFile)
+        val url = "jdbc:sqlite:${dbFile.toAbsolutePath()}"
+
+        DriverManager.getConnection(url).use { connection ->
+            connection.createStatement().use { statement ->
+                statement.execute(
+                    """
+                    CREATE TABLE system_status_indicator (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        label TEXT NOT NULL,
+                        state TEXT NOT NULL,
+                        created_at INTEGER NOT NULL,
+                        updated_at INTEGER NOT NULL,
+                        version INTEGER NOT NULL DEFAULT 1
+                    )
+                    """.trimIndent(),
+                )
+                statement.execute("PRAGMA user_version = 2")
+            }
+        }
+
+        val driver = JdbcSqliteDriver(url, Properties(), OpfisDatabase.Schema)
+        val database = OpfisDatabase(driver)
+
+        database.accountQueries.insertOrReplace(
+            id = "acc-1",
+            name = "Checking",
+            type = "CHECKING",
+            balance_minor_units = 0L,
+            is_archived = 0L,
+            created_at = 1000L,
+            updated_at = 1000L,
+            version = 1L,
+        )
+        assertEquals(
+            "Checking",
+            database.accountQueries
+                .selectById("acc-1")
+                .executeAsOne()
+                .name,
+        )
+
+        driver.close()
+        Files.deleteIfExists(dbFile)
+    }
 }

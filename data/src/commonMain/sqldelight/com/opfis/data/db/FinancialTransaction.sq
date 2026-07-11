@@ -1,0 +1,35 @@
+CREATE TABLE financial_transaction (
+    id TEXT NOT NULL PRIMARY KEY,
+    account_id TEXT NOT NULL,
+    category_id TEXT,
+    type TEXT NOT NULL,
+    amount_minor_units INTEGER NOT NULL,
+    transfer_account_id TEXT,
+    description TEXT NOT NULL DEFAULT '',
+    occurred_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE INDEX financial_transaction_account_id ON financial_transaction (account_id);
+
+selectAll:
+SELECT * FROM financial_transaction ORDER BY occurred_at DESC;
+
+selectById:
+SELECT * FROM financial_transaction WHERE id = ?;
+
+selectByAccount:
+SELECT * FROM financial_transaction
+WHERE account_id = ? OR transfer_account_id = ?
+ORDER BY occurred_at DESC;
+
+insertOrReplace:
+INSERT OR REPLACE INTO financial_transaction
+    (id, account_id, category_id, type, amount_minor_units, transfer_account_id, description,
+     occurred_at, created_at, updated_at, version)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM financial_transaction WHERE id = ?;

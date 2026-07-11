@@ -48,3 +48,16 @@ loaded from `OpfisApplication.kt`/`Main.kt`) provide the driver
 factory, key provider, `SqlDriver`, `OpfisDatabase`, and `BackupPort`,
 since those need a platform `Context` or directory that commonMain
 doesn't have.
+
+## Financial domain (Phase 2, see `03-domain-model.md` / `12-financial-engine.md`)
+
+Account/Asset/Liability/Category/Budget/Goal follow the same
+entity + repository-port + use-case pattern as `systemstatus`, one
+package per entity under `:domain`, implemented by `Sql<Entity>Repository`
+in `:data`. Transactions split reads from writes: `TransactionRepository`
+(read-only) vs. `FinancialLedgerPort` (posts/reverses a transaction and
+its account-balance deltas as one atomic SQLDelight `transaction {}`
+block, implemented by `SqlFinancialLedger`). The balance-delta sign
+convention itself lives in `TransactionLedgerRules`, a pure domain
+policy object with no SQL/framework dependency, so it is unit-tested
+without a database.

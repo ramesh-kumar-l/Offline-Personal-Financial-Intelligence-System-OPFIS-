@@ -1,0 +1,22 @@
+CREATE TABLE category (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    parent_id TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+selectAll:
+SELECT * FROM category ORDER BY created_at ASC;
+
+selectById:
+SELECT * FROM category WHERE id = ?;
+
+insertOrReplace:
+INSERT OR REPLACE INTO category (id, name, type, parent_id, created_at, updated_at, version)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM category WHERE id = ?;

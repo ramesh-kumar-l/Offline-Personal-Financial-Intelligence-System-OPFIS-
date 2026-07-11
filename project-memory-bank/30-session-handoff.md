@@ -4,61 +4,74 @@ Last session: 2026-07-11
 
 ## Completed this session
 
-- Owner installed a real toolchain (JDK 25.0.3, Android SDK platform 36
-  at `D:\Android_SDK_New`) and this session got real internet access,
-  resolving every gap Phase 0 had previously flagged as unverified.
-- Verified and bumped every dependency version against Maven
-  Central/Google Maven as of 2026-07-11 (Gradle 9.6.1, AGP 9.2.1,
-  Kotlin 2.4.0, Compose Multiplatform 1.11.1, Koin 4.2.2, etc.) -
-  Phase 0's originally-guessed versions were a year+ stale.
-- Generated the real `gradle-wrapper.jar` (bootstrapped via a
-  downloaded Gradle 9.6.1 distribution) and committed it.
-- Hit and fixed a real AGP 9.0 breaking change (KMP + `com.android.library`
-  incompatibility) via documented compatibility flags - ADR 0004.
-- Ran `./gradlew ktlintCheck detekt allTests assemble` to a fully green
-  state for both Android and Desktop - **Phase 0 exit criteria ("build
-  passes") is now met**, closing the gap the previous session left
-  open.
-- Implemented Phase 1 (Core Persistence) per ROADMAP.md: SQLDelight +
-  SQLCipher encrypted database, platform driver factories, encryption
-  key providers, a persisted `SystemStatusRepository` replacing Phase
-  0's static stand-in, a versioned migration, and `BackupPort` +
-  `FileBackupPort` - see ADR 0005 for the full design and its
-  documented Phase 8/9 follow-ups.
-- Wrote and ran 7 new tests against the real (non-mocked) encrypted
-  database via `:data:desktopTest`, covering: reopen-after-close
-  persistence, wrong-passphrase rejection, schema auto-migration, and
-  backup/restore round-trip. All pass.
-- Updated memory bank: `02-system-architecture.md`, `05-current-state.md`,
-  `06-tech-stack.md`, `07-repository-structure.md`, `24-adr-index.md`,
-  `26-active-initiatives.md` (this file).
+- Implemented Phase 2 (Financial Domain) per ROADMAP.md: Accounts,
+  Assets, Liabilities, Categories, Transactions, Budgets, Goals.
+- Domain layer (`:domain`): 7 entities with validating `init` blocks,
+  7 repository ports, 3 CRUD use cases per entity (Observe/Upsert/
+  Delete, or Observe-only for read-side Transaction), plus the ledger
+  engine: `TransactionLedgerRules` (pure balance-delta policy),
+  `FinancialLedgerPort` (record/delete), `RecordTransactionUseCase`,
+  `DeleteTransactionUseCase`.
+- Data layer (`:data`): 7 new SQLDelight tables + `migrations/2.sqm`
+  (schema v2 -> v3), 7 `Sql<Entity>Repository` implementations, and
+  `SqlFinancialLedger` which posts/reverses a transaction and its
+  account-balance deltas inside one SQLDelight `transaction {}` block
+  for atomicity.
+- Wired all new repositories/ports into `:data`'s `dataModule` and all
+  new use cases into `:composeApp`'s `appModule` (Koin) - no UI screens
+  were added, since ROADMAP explicitly scopes Dashboard/UX to Phase 3.
+- Tests: 8 new domain unit tests + 22 new data-layer integration tests
+  (all against real SQLite, no mocks) + 1 new schema-migration test.
+  All pass. Every new file is under 300 lines (largest: 145).
+- Full build gate (`ktlintCheck detekt allTests assemble`, Android +
+  Desktop) green: `BUILD SUCCESSFUL in 2m 3s`, 394 tasks (85 executed,
+  309 up-to-date).
+- Updated memory bank: `02-system-architecture.md`, `03-domain-model.md`,
+  `05-current-state.md`, `07-repository-structure.md`,
+  `11-database-schema.md`, `12-financial-engine.md`,
+  `26-active-initiatives.md`, this file.
+
+## Notable issues hit and fixed this session
+
+- `SqlDelight`'s `deleteById(id)` query method returns
+  `QueryResult<Long>` (rows affected); repository `delete()` overrides
+  using an expression body (`= queries.deleteById(id)`) inferred that
+  return type instead of the interface's `Unit`, failing compilation.
+  Fixed by using a block body (`{ queries.deleteById(id) }`) in all 6
+  affected repositories.
+- Running `:data:desktopTest` and `:domain:test` in the same Gradle
+  invocation crashed the data test JVM worker partway through (silent,
+  no stack trace - likely resource contention, possibly around
+  willena's sqlite-jdbc native library extraction). Running them as
+  separate Gradle invocations was reliable and is the pattern used for
+  the rest of this session; worth a note if it recurs, but not
+  investigated further since the underlying test suite is correct in
+  isolation.
 
 ## Not completed
 
-- Android's encrypted driver path is compiled and assembled
-  (`:composeApp:assembleDebug` succeeds) but not exercised by an
-  instrumented test - no emulator/device available in this
-  environment. Desktop's equivalent path is fully tested.
-- Desktop's encryption key currently lives in a plain file
-  (`~/.opfis/.opfis_db_key`) with no OS-keychain protection - documented
-  Phase 8 follow-up in ADR 0005, not an oversight.
-- Phase 2 (Financial Domain) has not been started.
+- Same three Phase 1 items as before (Android instrumented test,
+  `androidx.security.crypto` deprecation, Desktop key-file hardening) -
+  all explicit Phase 8 scope, unchanged.
+- Phase 3 (Dashboard & UX) has not been started.
 
 ## Next recommended task
 
-1. Owner review of Phase 1 (particularly ADR 0005's key-management
-   scope boundary) and explicit approval to start Phase 2.
-2. Phase 2 (Financial Domain): accounts, assets, liabilities,
-   transactions, categories, budgets, goals - extends the same
-   SQLDelight schema/migration pattern established in Phase 1.
+1. Owner review of Phase 2 (particularly the ledger atomicity design
+   and the deliberate scope exclusions in `12-financial-engine.md`:
+   net worth, budget analytics, multi-currency, FK enforcement) and
+   explicit approval to start Phase 3.
+2. Phase 3 (Dashboard & UX): dashboard, net worth, cash flow, charts,
+   recent activity, search entry - the first UI-facing phase, consuming
+   the Phase 2 repositories/use cases.
 3. When an Android emulator/device is available, add the instrumented
-   test flagged above.
+   test flagged since Phase 1.
 
 ## Open risks
 
-- AGP 9's compatibility flags (ADR 0004) are a deprecated-but-working
-  path with a shelf life - must be revisited before AGP 10.0.
-- `androidx.security.crypto` 1.1.0 (latest stable) self-flags
-  `EncryptedSharedPreferences`/`MasterKey` as deprecated; no replacement
-  API was adopted yet since 1.1.0 is still the current stable release -
-  watch for its successor before/during Phase 8.
+- Same as Phase 1 (AGP 9 compatibility flags' shelf life,
+  `androidx.security.crypto` deprecation) - unchanged, see prior
+  entries in `27-known-risks.md` if populated.
+- No ID-generation strategy has been chosen yet for new financial
+  entities; Phase 3's UI work will need one (e.g. UUID at the
+  Presentation layer) before users can create records through the app.

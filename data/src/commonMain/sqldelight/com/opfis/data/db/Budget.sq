@@ -1,0 +1,23 @@
+CREATE TABLE budget (
+    id TEXT NOT NULL PRIMARY KEY,
+    category_id TEXT NOT NULL,
+    limit_minor_units INTEGER NOT NULL,
+    period TEXT NOT NULL,
+    start_date INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+selectAll:
+SELECT * FROM budget ORDER BY created_at ASC;
+
+selectById:
+SELECT * FROM budget WHERE id = ?;
+
+insertOrReplace:
+INSERT OR REPLACE INTO budget (id, category_id, limit_minor_units, period, start_date, created_at, updated_at, version)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM budget WHERE id = ?;
