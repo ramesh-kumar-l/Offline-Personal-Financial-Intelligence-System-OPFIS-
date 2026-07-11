@@ -61,3 +61,30 @@ block, implemented by `SqlFinancialLedger`). The balance-delta sign
 convention itself lives in `TransactionLedgerRules`, a pure domain
 policy object with no SQL/framework dependency, so it is unit-tested
 without a database.
+
+## Dashboard & UX (Phase 3, see `05-current-state.md`)
+
+Read-only phase - no `:data` or schema changes. Two new pure domain
+policy objects follow the `TransactionLedgerRules` pattern:
+`NetWorthCalculator` (sums Account + Asset, subtracts Liability,
+excludes archived accounts) and `CashFlowCalculator` (buckets
+non-transfer transactions into calendar months using `kotlinx-datetime`
+for correct leap-year/month-length/year-rollover math, with pure
+hand-rolled `floorDiv`/`floorMod` to stay JVM-API-free in `commonMain`).
+Four new Application-layer use cases in `:domain` (`ObserveNetWorthUseCase`,
+`ObserveCashFlowUseCase`, `ObserveRecentTransactionsUseCase`,
+`SearchFinancialRecordsUseCase`) each use `kotlinx.coroutines.flow.combine`
+to fan-in 2-3 repository `Flow`s (plus a query `Flow` for search) into one
+derived stream - no new repository methods were needed. `FinancialSearchEngine`
+is a deliberately minimal in-memory substring search (see
+`14-search-engine.md`); Phase 4 replaces it with FTS5.
+
+Presentation: `composeApp/.../dashboard/` holds one `DashboardScreen`
+assembling five Card sections (Net Worth, Cash Flow, Recent Activity,
+Search, Trust Indicators). Two Canvas-based custom charts
+(`dashboard/chart/`) - an Asset Allocation donut and a Cash Flow grouped
+bar chart - use fixed, never-cycled categorical colors and pair every
+colored element with an icon/marker + text label (SystemPrompt Part 3,
+"never color alone"). No third-party charting library was added. The
+old `SystemStatusScreen` (Phase 0) is retired; its trust-indicator
+concept lives on as `TrustIndicatorsSection` inside the new dashboard.

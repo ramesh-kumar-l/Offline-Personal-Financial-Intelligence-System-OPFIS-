@@ -1,7 +1,7 @@
 # Current State
 
-Last updated: 2026-07-11 (Phase 0 closed; Phase 1 Core Persistence
-implemented and tested; Phase 2 Financial Domain implemented and tested)
+Last updated: 2026-07-12 (Phases 0-2 closed; Phase 3 Dashboard & UX
+implemented and tested)
 
 ## Implemented
 
@@ -61,6 +61,43 @@ implemented and tested; Phase 2 Financial Domain implemented and tested)
 - Full build gate (`ktlintCheck detekt allTests assemble`, Android +
   Desktop) green: `BUILD SUCCESSFUL in 2m 3s`, 394 tasks.
 
+### Phase 3 - Dashboard & UX (implemented and tested)
+
+- Two new pure domain policy objects: `NetWorthCalculator` (sums
+  Account + Asset, subtracts Liability, excludes archived accounts) and
+  `CashFlowCalculator` (buckets non-transfer transactions into calendar
+  months via `kotlinx-datetime`, correct across leap years/month-length/
+  year-rollover) - see `02-system-architecture.md`, `03-domain-model.md`.
+- Four new Application use cases combining existing repositories via
+  `Flow.combine` (`ObserveNetWorthUseCase`, `ObserveCashFlowUseCase`,
+  `ObserveRecentTransactionsUseCase`, `SearchFinancialRecordsUseCase`) -
+  zero new repository methods, zero `:data`/schema changes.
+- `FinancialSearchEngine`: minimal, real in-memory substring search
+  across Account/Category/Transaction (see `14-search-engine.md`) -
+  deliberately not the full Phase 4 FTS5 search.
+- Presentation: single `DashboardScreen` (composeApp/.../dashboard/)
+  with Net Worth (+ Asset Allocation donut chart), Cash Flow (+ grouped
+  bar chart), Recent Activity, Search, and Trust Indicators sections.
+  Charts are custom Canvas draws, no third-party charting library,
+  fixed never-cycled categorical colors, icon+text+color (never color
+  alone) per SystemPrompt Part 3. New `format/` package
+  (`MoneyFormatter`, `MonthLabelFormatter`, `DateFormatter`) - all
+  locale-API-free.
+- Retired Phase 0's `SystemStatusScreen`; `App.kt` now renders
+  `DashboardScreen()`. New dependency: `kotlinx-datetime` 0.6.1
+  (`:domain` and `:composeApp`), justified for correct calendar-month
+  math and Presentation date formatting.
+- Tests: 5 new domain unit-test files (`NetWorthCalculatorTest`,
+  `ObserveNetWorthUseCaseTest`, `CashFlowCalculatorTest`,
+  `ObserveRecentTransactionsUseCaseTest`, `FinancialSearchEngineTest`),
+  all passing. Every new/modified file is under 300 lines (largest is
+  102).
+- Full build gate (`ktlintCheck detekt allTests assemble`, Android +
+  Desktop) green: `BUILD SUCCESSFUL in 6m 21s`, 394 tasks. (First run
+  failed on 3 detekt `LongParameterList` violations - fixed by bundling
+  chart-drawing geometry params into small data classes/`Rect` and
+  collapsing a test helper's year/month/day into one `occurredAt`.)
+
 ## Known gaps / not yet verified
 
 - Android's encrypted driver path has no instrumented test (no
@@ -72,18 +109,24 @@ implemented and tested; Phase 2 Financial Domain implemented and tested)
 - No ID-generation utility exists yet for new Phase 2 entities (use
   cases accept fully-formed entities with caller-supplied ids) -
   expected to land with Phase 3 UI.
-- Net worth computation and budget spend-vs-limit analytics are
-  deliberately not implemented - they read Phase 2 data but are
-  Dashboard/UX scope (Phase 3), not Financial Domain scope (Phase 2).
+- Budget spend-vs-limit analytics remain unimplemented (net worth is
+  now covered by Phase 3; budget analytics was never in Phase 3's
+  ROADMAP scope either - revisit if a future phase calls for it).
 - No multi-currency/FX support; all monetary fields assume one implicit
   currency system-wide.
 - No SQLite `PRAGMA foreign_keys` enforcement; cross-entity references
   (`category_id`, `account_id`, `transfer_account_id`, `parent_id`) are
   plain columns, not declared FK constraints.
+- No historical net-worth snapshots exist, so Phase 3 deliberately has
+  no "net worth trend" chart (would require fabricating data).
+- `FinancialSearchEngine` is in-memory substring search only - no
+  ranking, filters, or tags; that is explicitly Phase 4 scope.
+- `dataviz` skill's `validate_palette.js` could not run (no `node` in
+  this environment) - chart palette relies on the project's existing
+  icon+text+color convention instead of a formal CVD validation run.
 
 ## Pending
 
-- Phase 3 onward (see `04-roadmap.md` / `ROADMAP.md`), starting with
-  Phase 3 (Dashboard & UX: dashboard, net worth, cash flow, charts,
-  recent activity, search entry) - not started, pending explicit
-  approval per the phase-execution policy.
+- Phase 4 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 4 "Search"
+  (SQLite FTS5, global search, filters, timeline search, tags) - not
+  started, pending explicit approval per the phase-execution policy.

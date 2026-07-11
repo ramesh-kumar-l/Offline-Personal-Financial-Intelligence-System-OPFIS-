@@ -9,6 +9,7 @@ import com.opfis.domain.asset.usecase.UpsertAssetUseCase
 import com.opfis.domain.budget.usecase.DeleteBudgetUseCase
 import com.opfis.domain.budget.usecase.ObserveBudgetsUseCase
 import com.opfis.domain.budget.usecase.UpsertBudgetUseCase
+import com.opfis.domain.cashflow.usecase.ObserveCashFlowUseCase
 import com.opfis.domain.category.usecase.DeleteCategoryUseCase
 import com.opfis.domain.category.usecase.ObserveCategoriesUseCase
 import com.opfis.domain.category.usecase.UpsertCategoryUseCase
@@ -18,9 +19,12 @@ import com.opfis.domain.goal.usecase.UpsertGoalUseCase
 import com.opfis.domain.liability.usecase.DeleteLiabilityUseCase
 import com.opfis.domain.liability.usecase.ObserveLiabilitiesUseCase
 import com.opfis.domain.liability.usecase.UpsertLiabilityUseCase
+import com.opfis.domain.networth.usecase.ObserveNetWorthUseCase
+import com.opfis.domain.search.usecase.SearchFinancialRecordsUseCase
 import com.opfis.domain.systemstatus.usecase.ObserveSystemStatusUseCase
 import com.opfis.domain.transaction.usecase.DeleteTransactionUseCase
 import com.opfis.domain.transaction.usecase.ObserveAccountTransactionsUseCase
+import com.opfis.domain.transaction.usecase.ObserveRecentTransactionsUseCase
 import com.opfis.domain.transaction.usecase.ObserveTransactionsUseCase
 import com.opfis.domain.transaction.usecase.RecordTransactionUseCase
 import org.koin.dsl.module
@@ -53,6 +57,22 @@ val appModule =
         factory { DeleteGoalUseCase(repository = get()) }
         factory { ObserveTransactionsUseCase(repository = get()) }
         factory { ObserveAccountTransactionsUseCase(repository = get()) }
+        factory { ObserveRecentTransactionsUseCase(transactionRepository = get()) }
         factory { RecordTransactionUseCase(ledger = get()) }
         factory { DeleteTransactionUseCase(ledger = get()) }
+        factory {
+            ObserveNetWorthUseCase(
+                accountRepository = get(),
+                assetRepository = get(),
+                liabilityRepository = get(),
+            )
+        }
+        factory { ObserveCashFlowUseCase(transactionRepository = get()) }
+        factory {
+            SearchFinancialRecordsUseCase(
+                accountRepository = get(),
+                categoryRepository = get(),
+                transactionRepository = get(),
+            )
+        }
     }

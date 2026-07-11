@@ -2,7 +2,7 @@
 
 ```
 composeApp/   Presentation layer + composition root
-  src/commonMain/   Shared Compose UI (App.kt, theme/, systemstatus/, di/AppModule.kt)
+  src/commonMain/   Shared Compose UI (App.kt, theme/, dashboard/, format/, di/AppModule.kt)
   src/androidMain/  MainActivity, OpfisApplication (Koin startKoin), AndroidManifest.xml
   src/desktopMain/  Main.kt (application entry point, Koin startKoin)
 
@@ -12,6 +12,7 @@ domain/       Domain + Application layers (pure Kotlin, no framework deps)
   src/commonMain/kotlin/com/opfis/domain/backup/                BackupPort (Phase 1)
   src/commonMain/kotlin/com/opfis/domain/transaction/            TransactionLedgerRules, FinancialLedgerPort (Phase 2)
   src/commonMain/kotlin/com/opfis/domain/{account,asset,liability,category,budget,goal}/  Phase 2 entities/ports/usecases
+  src/commonMain/kotlin/com/opfis/domain/{networth,cashflow,search}/  Phase 3 derived-model calculators/engine + usecase/
   src/commonTest/                                               unit tests (fakes, no DI container)
 
 data/         Infrastructure layer
@@ -38,7 +39,15 @@ SystemPrompt/                Engineering operating system (5 parts)
 
 Module ownership: each Gradle module owns its own package namespace
 (`com.opfis.shared`, `com.opfis.domain`, `com.opfis.data`,
-`com.opfis.app`). Feature slices (e.g. `systemstatus`) get one package
-per module they touch, named identically across modules, so the
-vertical slice is easy to find (e.g. `domain/.../systemstatus/`,
-`data/.../systemstatus/`, `composeApp/.../systemstatus/`).
+`com.opfis.app`). Feature slices get one package per module they touch,
+named identically across modules, so the vertical slice is easy to find
+(e.g. `domain/.../account/`, `data/.../account/`).
+
+`composeApp/.../dashboard/` (Phase 3) is presentation-only - it has no
+`:data` counterpart since Phase 3 introduced zero schema/repository
+changes, only new `:domain` use cases combining existing repositories.
+`composeApp/.../format/` holds locale-API-free formatting helpers
+(`MoneyFormatter`, `MonthLabelFormatter`, `DateFormatter`). The Phase 0
+`systemstatus/` package (composeApp) was retired in Phase 3 - its
+`SystemStatusScreen` was deleted and its trust-indicator concept folded
+into `dashboard/TrustIndicatorsSection.kt`.

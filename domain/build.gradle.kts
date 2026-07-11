@@ -15,6 +15,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":shared"))
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

@@ -50,3 +50,27 @@ atomic balance-adjustment contract.
 part of ROADMAP Phase 2 ("Financial Domain": Accounts, Assets,
 Liabilities, Transactions, Categories, Budgets, Goals) and are not
 implemented yet.
+
+## Phase 3 derived models (read-only, not persisted)
+
+These are computed from Phase 2 entities on the fly - none are new
+database tables:
+
+- **NetWorthSummary** (`networth/`) - `accountBalanceMinorUnits,
+  assetValueMinorUnits, liabilityBalanceMinorUnits`, with computed
+  `totalAssetsMinorUnits`/`netWorthMinorUnits`. Built by
+  `NetWorthCalculator.calculate(accounts, assets, liabilities)`,
+  excluding archived accounts.
+- **CashFlowPeriod** (`cashflow/`) - `year, month, incomeMinorUnits,
+  expenseMinorUnits`, with computed `netMinorUnits`. Built by
+  `CashFlowCalculator.summarizeByMonth(...)`, excluding TRANSFER
+  transactions; months with no activity still appear with zero totals.
+- **SearchResult** (`search/`) - sealed class: `AccountMatch`,
+  `CategoryMatch`, `TransactionMatch`. Built by
+  `FinancialSearchEngine.search(...)`, a deliberately minimal
+  substring match (see `14-search-engine.md` - Phase 4 replaces this
+  with FTS5).
+
+No historical net-worth snapshots exist, so there is deliberately no
+"net worth trend" chart in Phase 3 (would require fabricating data
+SystemPrompt Part 3 forbids this).
