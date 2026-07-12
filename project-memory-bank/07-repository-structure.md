@@ -62,3 +62,25 @@ gained `Tag.sq`/`TransactionTag.sq`/`SearchIndex.sq` and
 `migrations/3.sqm`; `composeApp/.../search/` (`SearchScreen` +
 `SearchScreenBody` + filter bar/tag chips/results list/timeline
 section) and a bottom `NavigationBar` in `App.kt`.
+
+Phase 5 adds: `domain/.../document/` (+ `document/usecase/`) - entity,
+`DocumentRepository`/`DocumentStoragePort`/`DocumentTextExtractorPort`
+ports, 5 use cases; `data/.../document/` (`SqlDocumentRepository`,
+`DocumentMapper` in `commonMain`; `DesktopDocumentStorage`,
+`DesktopDocumentTextExtractor`, `TesseractEngine` in `desktopMain`;
+`AndroidDocumentStorage`, `AndroidDocumentTextExtractor` in
+`androidMain`) plus `data/.../db/` schema gaining `Document.sq` and
+`migrations/4.sqm`; `composeApp/.../document/` (`DocumentVaultScreen` +
+`DocumentVaultScreenBody` + `DocumentRow`, `DocumentPicker`
+`expect`/`actual` in `commonMain`/`desktopMain`/`androidMain`) and a
+third `NavigationBar` destination ("Vault") in `App.kt`.
+
+Phase 6 adds: `domain/.../entity/` (`EntityType`, `EntityRef`),
+`domain/.../memory/` (+ `memory/usecase/`), `domain/.../relationship/`
+(+ `relationship/usecase/`, `KnowledgeGraph.kt`); `data/.../memory/`
+(`SqlMemoryEventRepository`, `MemoryEventMapper`), `data/.../relationship/`
+(`SqlRelationshipRepository`, `RelationshipMapper`) plus `data/.../db/`
+schema gaining `MemoryEvent.sq`/`Relationship.sq` and `migrations/5.sqm`;
+`composeApp/.../memory/` (`MemoryScreen` + `MemoryScreenBody` +
+`MemoryEventRow`) and a fourth `NavigationBar` destination ("Memory")
+in `App.kt`.

@@ -87,3 +87,40 @@ SystemPrompt Part 3 forbids this).
   the new **TimelineEntry** (`timeline/`) chronological browse - see
   `14-search-engine.md` for the FTS5 mechanics and the deliberate
   tag/date-filter scope cut (timeline-only, not global text search).
+
+## Phase 5 additions
+
+- **Document** (`document/`) - `id, fileName, storagePath, mimeType,
+  documentType (RECEIPT/STATEMENT/INVOICE/OTHER), extractedText,
+  linkedTransactionId?, importedAt, createdAt, updatedAt`. `init`
+  requires `fileName`/`storagePath`/`mimeType` non-blank. The row never
+  holds file bytes - `storagePath` points at a file the platform
+  `DocumentStoragePort` owns. Optionally linked to one `Transaction`
+  (the "receipt vault" use case); `extractedText` (OCR/PDF-extracted)
+  feeds Phase 4's `search_index` FTS5 table so documents are globally
+  searchable - see `14-search-engine.md`, `16-document-engine.md`.
+- **SearchResult** gained `DocumentMatch`.
+
+## Phase 6 additions
+
+- **EntityType** / **EntityRef** (`entity/`) - a cross-cutting entity
+  kind enum + `(entityType, entityId)` pointer used by `MemoryEvent` and
+  `Relationship` so neither package needs to depend on every feature
+  package directly. Deliberately separate from `search/SearchEntityType`
+  (Phase 4), which only lists FTS5-indexed kinds.
+- **MemoryEvent** (`memory/`) - `id, eventType (NOTE/MILESTONE), title,
+  description, subject: EntityRef?, occurredAt, createdAt, updatedAt`.
+  `init` requires a non-blank `title`. Manually recorded only - see
+  `13-memory-engine.md` for the scope decision not to auto-generate
+  these from other use cases this phase. Feeds `search_index` (title +
+  description), so `SearchResult` gained `MemoryEventMatch`.
+- **Relationship** (`relationship/`) - `id, from: EntityRef, to:
+  EntityRef, relationshipType (RELATED/SUPPORTING_DOCUMENT/
+  CONTRIBUTES_TO/PART_OF), createdAt, updatedAt`. `init` requires
+  `from != to`. Stores only links the schema has no dedicated FK column
+  for - `Document.linkedTransactionId` and `transaction_tag` remain
+  each feature's own concern, not duplicated here.
+- **KnowledgeGraph** (`relationship/`, derived, not persisted) -
+  `root: EntityRef, neighbors: List<EntityRef>, edges: List<Relationship>`.
+  Built by the pure `KnowledgeGraphBuilder.build(root, relationships)`
+  from a root entity's `Relationship`s (1-hop only).

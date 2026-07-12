@@ -49,7 +49,11 @@ internal fun SearchScreenBody(
     state: SearchScreenState,
     actions: SearchScreenActions,
 ) {
-    val (query, filter, tags, searchResults, timeline) = state
+    val query = state.query
+    val filter = state.filter
+    val tags = state.tags
+    val searchResults = state.searchResults
+    val timeline = state.timeline
     Column(
         modifier =
             Modifier

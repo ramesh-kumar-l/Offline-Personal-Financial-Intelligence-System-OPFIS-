@@ -50,6 +50,16 @@ CREATE TRIGGER document_search_ad AFTER DELETE ON document BEGIN
     DELETE FROM search_index WHERE entity_type = 'DOCUMENT' AND entity_id = old.id;
 END;
 
+CREATE TRIGGER memory_event_search_ai AFTER INSERT ON memory_event BEGIN
+    DELETE FROM search_index WHERE entity_type = 'MEMORY_EVENT' AND entity_id = new.id;
+    INSERT INTO search_index(entity_type, entity_id, text)
+    VALUES ('MEMORY_EVENT', new.id, new.title || ' ' || new.description);
+END;
+
+CREATE TRIGGER memory_event_search_ad AFTER DELETE ON memory_event BEGIN
+    DELETE FROM search_index WHERE entity_type = 'MEMORY_EVENT' AND entity_id = old.id;
+END;
+
 searchAccounts:
 SELECT a.* FROM account a
 JOIN search_index si ON si.entity_type = 'ACCOUNT' AND si.entity_id = a.id
@@ -77,5 +87,11 @@ ORDER BY bm25(search_index);
 searchDocuments:
 SELECT d.* FROM document d
 JOIN search_index si ON si.entity_type = 'DOCUMENT' AND si.entity_id = d.id
+WHERE search_index MATCH :matchExpression
+ORDER BY bm25(search_index);
+
+searchMemoryEvents:
+SELECT me.* FROM memory_event me
+JOIN search_index si ON si.entity_type = 'MEMORY_EVENT' AND si.entity_id = me.id
 WHERE search_index MATCH :matchExpression
 ORDER BY bm25(search_index);

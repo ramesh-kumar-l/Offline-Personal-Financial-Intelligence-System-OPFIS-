@@ -1,7 +1,7 @@
 # Current State
 
-Last updated: 2026-07-12 (Phases 0-3 closed; Phase 4 Search implemented
-and tested)
+Last updated: 2026-07-12 (Phases 0-5 closed; Phase 6 Financial Memory
+implemented and tested)
 
 ## Implemented
 
@@ -149,6 +149,135 @@ and tested)
   extracting `createV3Schema` and splitting `SearchScreen` into
   `SearchScreen`/`SearchScreenBody`).
 
+### Phase 5 - Document Intelligence (implemented and tested)
+
+- Domain: `Document` entity (`id, fileName, storagePath, mimeType,
+  documentType, extractedText, linkedTransactionId?, importedAt,
+  createdAt, updatedAt`) + `DocumentType` enum (RECEIPT/STATEMENT/
+  INVOICE/OTHER). Three ports: `DocumentRepository` (observeAll,
+  observeByTransaction, upsert, delete, linkToTransaction),
+  `DocumentStoragePort` (save/read/delete raw bytes - the database only
+  ever stores `storagePath`, never file content, to keep large binaries
+  out of the SQLCipher-encrypted rows), `DocumentTextExtractorPort`
+  (`extractText(bytes, mimeType): String`, returns `""` rather than
+  throwing when nothing can be recovered, so import always succeeds).
+  Five use cases: `ImportDocumentUseCase` (takes one
+  `ImportDocumentRequest` bundling id/fileName/bytes/mimeType/
+  documentType/linkedTransactionId/now - reduced from 7 loose params to
+  clear a detekt `LongParameterList` finding), `ObserveDocumentsUseCase`,
+  `ObserveDocumentsForTransactionUseCase`, `LinkDocumentToTransactionUseCase`,
+  `DeleteDocumentUseCase`.
+- Schema v5 (`migrations/4.sqm`): `document` table (`storage_path`,
+  `mime_type`, `document_type`, `extracted_text` default `''`,
+  `linked_transaction_id` indexed, standard audit columns) plus
+  `document_search_ai`/`document_search_ad` triggers that fold
+  `file_name || ' ' || extracted_text` into Phase 4's `search_index`
+  FTS5 table under `entity_type = 'DOCUMENT'` - same trigger-based sync
+  pattern as account/category/financial_transaction/tag, so a document
+  is globally searchable the moment it's imported. `SearchResult`
+  gained `DocumentMatch`.
+- Data: `SqlDocumentRepository` + `DocumentMapper`. Storage and text
+  extraction are platform `expect`/`actual`: `DesktopDocumentStorage`
+  writes to a local app-data directory; `DesktopDocumentTextExtractor`
+  reads a PDF's embedded text directly via Apache PDFBox 3.0.8, falling
+  back to Tesseract OCR (`tess4j` 5.19.0, via a small `TesseractEngine`
+  wrapper) for image files or PDFs with no embedded text.
+  `AndroidDocumentStorage` writes to app-private storage;
+  `AndroidDocumentTextExtractor` renders PDF pages to bitmaps via
+  `PdfRenderer` (Android has no bundled PDF-text API) and OCRs every
+  page with ML Kit's standalone on-device text recognizer
+  (`com.google.mlkit:text-recognition` 16.0.1 - model bundled in the
+  app, no Play Services network call, fully offline) - not verified on
+  a device/emulator in this environment (no Android runtime available
+  here), same caveat as the existing SQLCipher Android path.
+- Presentation: new `composeApp/.../document/` package - "Receipt
+  Vault" is a new bottom-nav destination (`AppDestination.Vault`,
+  alongside Dashboard and Search) rendering `DocumentVaultScreen` (state/
+  wiring) + `DocumentVaultScreenBody` (layout: import button, document
+  list, each row optionally linkable to a transaction and deletable).
+  `DocumentPicker` is `expect`/`actual`
+  (`rememberDocumentPickerLauncher`): Desktop uses `java.awt.FileDialog`
+  (constructed with an explicit `Frame?` cast - passing bare `null`
+  is an overload-resolution ambiguity between the `Frame`- and
+  `Dialog`-parent constructor overloads); Android uses
+  `ActivityResultContracts.GetContent()` + `ContentResolver` to read
+  bytes/MIME type/display name from the returned `Uri` - not verified
+  on a device/emulator in this environment, same caveat as the OCR path
+  above.
+- Tests: `DocumentTest` (entity validation), `ImportDocumentUseCaseTest`
+  (fakes for all three ports), `SqlDocumentRepositoryTest`,
+  `DesktopDocumentTextExtractorTest` (real PDFBox/Tesseract against
+  fixture files). The existing `SchemaMigrationTest`'s v1-to-current
+  full-chain case implicitly exercises the v4->v5 `document` migration
+  (schema creation fails loudly on driver open if it were broken), but
+  there is no dedicated v4->v5 assertion case matching the v2/v3
+  pattern - a minor coverage gap, not a correctness gap. All new files
+  are under 300 lines (largest: 96, `DesktopDocumentTextExtractorTest.kt`).
+- Full build gate (`ktlintCheck detekt allTests assemble`, Android +
+  Desktop) green: `BUILD SUCCESSFUL in 2m 56s`, 395 tasks. Took 4
+  attempts to go fully green - see `30-session-handoff.md` for the full
+  list of issues hit and fixed (2 ktlint, 3 detekt `LongParameterList`/
+  `LongMethod`/`DestructuringDeclarationWithTooManyEntries`/
+  `NestedBlockDepth`, plus 3 genuine compile errors: a `FileDialog(null,
+  ...)` constructor ambiguity, a suspend-function-inside-`joinToString`
+  violation, and a spurious `import
+  androidx.compose.foundation.layout.weight` that shadowed an internal
+  Compose property).
+
+### Phase 6 - Financial Memory (implemented and tested)
+
+- Domain: `MemoryEvent` (NOTE/MILESTONE, optional `subject: EntityRef`)
+  + `MemoryEventRepository` + 4 use cases; `Relationship` (typed link
+  between two `EntityRef`s) + `RelationshipRepository` + 3 CRUD use
+  cases; a pure `KnowledgeGraphBuilder` projecting a root entity's
+  relationships into a 1-hop `KnowledgeGraph`
+  (`ObserveKnowledgeGraphUseCase`) - deliberately not a full transitive
+  traversal across every entity's existing foreign keys. New
+  cross-cutting `domain/entity/` package (`EntityType`, `EntityRef`),
+  kept separate from Phase 4's `SearchEntityType`. See
+  `13-memory-engine.md` for the full design rationale, including the
+  deliberate decision not to auto-generate `MemoryEvent`s from other
+  use cases this phase.
+- Schema v6 (`migrations/5.sqm`): `memory_event` and `relationship`
+  tables. `memory_event` is wired into the FTS5 `search_index` (same
+  trigger pattern as document/tag/account/category/transaction);
+  `SearchResult` gained `MemoryEventMatch`. `relationship` is not
+  search-indexed (no free text).
+- Data: `SqlMemoryEventRepository` + `MemoryEventMapper`,
+  `SqlRelationshipRepository` + `RelationshipMapper`
+  (`data/.../memory/`, `data/.../relationship/`).
+  `SqlSearchIndexRepository` extended with `searchMemoryEvents`,
+  following the exact same per-entity-type pattern as Document (Phase
+  5). One real bug hit and fixed: SQLDelight generates row classes for
+  multi-word snake_case tables by capitalizing only the first letter
+  and keeping underscores (`Memory_event`, matching the existing
+  `Financial_transaction`/`Transaction_tag` precedent) rather than
+  full PascalCase - `MemoryEventMapper.kt` initially assumed the wrong
+  generated name.
+- Presentation: a 4th bottom-nav destination, "Memory"
+  (`composeApp/.../memory/MemoryScreen` + `MemoryScreenBody` +
+  `MemoryEventRow`) - an inline note/milestone recording form above the
+  chronological timeline. No dedicated UI for `Relationship`/
+  `KnowledgeGraph` yet (engine only) - see `13-memory-engine.md`.
+- Tests: `MemoryEventTest`, `RelationshipTest`, `KnowledgeGraphBuilderTest`
+  (domain unit tests, including one exercising both relationship
+  directions), `ObserveKnowledgeGraphUseCaseTest` (fake repository),
+  `SqlMemoryEventRepositoryTest`, `SqlRelationshipRepositoryTest` (real
+  in-memory SQLite). The existing v1-to-current `SchemaMigrationTest`
+  case was extended with an assertion that `memory_event` is queryable
+  post-migration, proving the full v1->v6 migration chain (including
+  Phase 5's 4.sqm and this phase's 5.sqm) applies cleanly - this also
+  retroactively closes the "no dedicated v4->v5 test" gap noted after
+  Phase 5. All new files are under 300 lines (largest: 228,
+  `SchemaMigrationTest.kt`, which predates this phase).
+- Full build gate (`ktlintCheck detekt allTests assemble`, Android +
+  Desktop) green: `BUILD SUCCESSFUL in 5m 12s`, 395 tasks. Took 3
+  attempts: (1) the `Memory_event` naming bug above plus a ktlint
+  chain-method-continuation violation and an unused import; (2) a
+  non-exhaustive `when` in `SearchResultRow.kt` missing the new
+  `SearchResult.MemoryEventMatch` branch. See `30-session-handoff.md`
+  for full detail.
+
 ## Known gaps / not yet verified
 
 - Android's encrypted driver path has no instrumented test (no
@@ -177,9 +306,20 @@ and tested)
   only to the Timeline browse, not the FTS5 global-text-search port -
   text relevance vs. browsing are treated as separate concerns by
   design, not an oversight.
+- Phase 5's OCR/PDF-extraction paths (Tesseract on Desktop, ML Kit on
+  Android) and both `DocumentPicker` actuals are unverified against real
+  files/devices beyond the fixture-based `DesktopDocumentTextExtractorTest`
+  - no Android runtime available in this environment, same recurring
+  caveat as the SQLCipher Android path.
+- Phase 6's `MemoryEvent`s are manually recorded only - no other use
+  case in the app auto-generates one, and `MemoryScreen`'s form never
+  sets `subject` - see `13-memory-engine.md` for the scope rationale.
+- Phase 6's `Relationship`/`KnowledgeGraph` engine (domain + data +
+  tests) has no presentation layer yet - only `MemoryEvent` got a
+  screen this phase.
 
 ## Pending
 
-- Phase 5 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 5
-  "Document Intelligence" (PDF import, image import, OCR, document
-  indexing, receipt vault) - in progress, see this file's next update.
+- Phase 7 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 7 "Local
+  AI" (local model abstraction, AI assistant, explainable answers,
+  semantic retrieval) - not yet started.

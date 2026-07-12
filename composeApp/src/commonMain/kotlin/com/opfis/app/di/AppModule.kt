@@ -24,7 +24,15 @@ import com.opfis.domain.goal.usecase.UpsertGoalUseCase
 import com.opfis.domain.liability.usecase.DeleteLiabilityUseCase
 import com.opfis.domain.liability.usecase.ObserveLiabilitiesUseCase
 import com.opfis.domain.liability.usecase.UpsertLiabilityUseCase
+import com.opfis.domain.memory.usecase.DeleteMemoryEventUseCase
+import com.opfis.domain.memory.usecase.ObserveMemoryEventsForEntityUseCase
+import com.opfis.domain.memory.usecase.ObserveMemoryTimelineUseCase
+import com.opfis.domain.memory.usecase.RecordMemoryEventUseCase
 import com.opfis.domain.networth.usecase.ObserveNetWorthUseCase
+import com.opfis.domain.relationship.usecase.CreateRelationshipUseCase
+import com.opfis.domain.relationship.usecase.DeleteRelationshipUseCase
+import com.opfis.domain.relationship.usecase.ObserveKnowledgeGraphUseCase
+import com.opfis.domain.relationship.usecase.ObserveRelationshipsForEntityUseCase
 import com.opfis.domain.search.usecase.SearchFinancialRecordsUseCase
 import com.opfis.domain.systemstatus.usecase.ObserveSystemStatusUseCase
 import com.opfis.domain.tag.usecase.AssignTagToTransactionUseCase
@@ -104,4 +112,12 @@ val appModule =
                 textExtractor = get(),
             )
         }
+        factory { ObserveMemoryTimelineUseCase(repository = get()) }
+        factory { ObserveMemoryEventsForEntityUseCase(repository = get()) }
+        factory { RecordMemoryEventUseCase(repository = get()) }
+        factory { DeleteMemoryEventUseCase(repository = get()) }
+        factory { ObserveRelationshipsForEntityUseCase(repository = get()) }
+        factory { CreateRelationshipUseCase(repository = get()) }
+        factory { DeleteRelationshipUseCase(repository = get()) }
+        factory { ObserveKnowledgeGraphUseCase(repository = get()) }
     }

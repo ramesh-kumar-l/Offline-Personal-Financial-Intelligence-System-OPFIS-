@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.opfis.app.dashboard.DashboardScreen
 import com.opfis.app.document.DocumentVaultScreen
+import com.opfis.app.memory.MemoryScreen
 import com.opfis.app.navigation.AppDestination
 import com.opfis.app.search.SearchScreen
 import com.opfis.app.theme.OpfisTheme
@@ -42,6 +43,7 @@ fun App() {
                     AppDestination.Dashboard -> DashboardScreen()
                     AppDestination.Search -> SearchScreen()
                     AppDestination.Vault -> DocumentVaultScreen()
+                    AppDestination.Memory -> MemoryScreen()
                 }
             }
         }

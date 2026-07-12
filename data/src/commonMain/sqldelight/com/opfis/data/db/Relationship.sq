@@ -1,0 +1,33 @@
+CREATE TABLE relationship (
+    id TEXT NOT NULL PRIMARY KEY,
+    from_entity_type TEXT NOT NULL,
+    from_entity_id TEXT NOT NULL,
+    to_entity_type TEXT NOT NULL,
+    to_entity_id TEXT NOT NULL,
+    relationship_type TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE INDEX relationship_from ON relationship (from_entity_type, from_entity_id);
+
+CREATE INDEX relationship_to ON relationship (to_entity_type, to_entity_id);
+
+selectInvolving:
+SELECT * FROM relationship
+WHERE (from_entity_type = :entityType AND from_entity_id = :entityId)
+   OR (to_entity_type = :entityType AND to_entity_id = :entityId)
+ORDER BY created_at DESC;
+
+selectById:
+SELECT * FROM relationship WHERE id = ?;
+
+insertOrReplace:
+INSERT OR REPLACE INTO relationship
+    (id, from_entity_type, from_entity_id, to_entity_type, to_entity_id,
+     relationship_type, created_at, updated_at, version)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM relationship WHERE id = ?;

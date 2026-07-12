@@ -3,6 +3,7 @@ package com.opfis.app.document
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
 import java.awt.FileDialog
+import java.awt.Frame
 import java.io.File
 import java.nio.file.Files
 
@@ -10,7 +11,7 @@ import java.nio.file.Files
 actual fun rememberDocumentPickerLauncher(onPicked: (PickedFile) -> Unit): () -> Unit {
     val currentOnPicked = rememberUpdatedState(onPicked)
     return {
-        val dialog = FileDialog(null, "Import Document", FileDialog.LOAD)
+        val dialog = FileDialog(null as Frame?, "Import Document", FileDialog.LOAD)
         dialog.isVisible = true
         val directory = dialog.directory
         val fileName = dialog.file

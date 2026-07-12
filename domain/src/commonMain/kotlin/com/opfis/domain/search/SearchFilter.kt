@@ -23,4 +23,5 @@ enum class SearchEntityType {
     TRANSACTION,
     TAG,
     DOCUMENT,
+    MEMORY_EVENT,
 }

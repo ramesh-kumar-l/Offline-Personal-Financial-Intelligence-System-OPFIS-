@@ -6,6 +6,7 @@ import com.opfis.data.account.toDomainAccount
 import com.opfis.data.category.toDomainCategory
 import com.opfis.data.db.OpfisDatabase
 import com.opfis.data.document.toDomainDocument
+import com.opfis.data.memory.toDomainMemoryEvent
 import com.opfis.data.tag.toDomainTag
 import com.opfis.data.transaction.toDomainTransaction
 import com.opfis.domain.search.SearchEntityType
@@ -40,9 +41,8 @@ class SqlSearchIndexRepository(
             searchTransactions(matchExpression, filter),
             searchTags(matchExpression, filter),
             searchDocuments(matchExpression, filter),
-        ) { accounts, categories, transactions, tags, documents ->
-            accounts + categories + transactions + tags + documents
-        }
+            searchMemoryEvents(matchExpression, filter),
+        ) { results -> results.toList().flatten() }
     }
 
     private fun searchAccounts(
@@ -113,5 +113,19 @@ class SqlSearchIndexRepository(
                 .asFlow()
                 .mapToList(Dispatchers.Default)
                 .map { rows -> rows.map { SearchResult.DocumentMatch(toDomainDocument(it)) } }
+        }
+
+    private fun searchMemoryEvents(
+        matchExpression: String,
+        filter: SearchFilter,
+    ): Flow<List<SearchResult>> =
+        if (SearchEntityType.MEMORY_EVENT !in filter.entityTypes) {
+            flowOf(emptyList())
+        } else {
+            database.searchIndexQueries
+                .searchMemoryEvents(matchExpression)
+                .asFlow()
+                .mapToList(Dispatchers.Default)
+                .map { rows -> rows.map { SearchResult.MemoryEventMatch(toDomainMemoryEvent(it)) } }
         }
 }

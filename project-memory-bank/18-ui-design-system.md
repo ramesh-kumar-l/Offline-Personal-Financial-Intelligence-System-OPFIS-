@@ -30,3 +30,24 @@ the FTS5 global-results list (query non-blank) or a chronological,
 taggable `TimelineSection` (query blank). Timeline rows use "▲"/"▼"/"⇄"
 markers for income/expense/transfer (paired with color, never color
 alone) and "#tagname ✕" text buttons to remove an assigned tag.
+
+## Phase 5 - Receipt Vault
+
+`App.kt`'s bottom `NavigationBar` gains a third destination, "Vault"
+(`AppDestination.Vault`), alongside Dashboard and Search.
+`DocumentVaultScreen` (state/wiring) + `DocumentVaultScreenBody`
+(layout) show an import button (launches the OS file picker), a list
+of imported documents (`DocumentRow` - filename, type, optional linked
+transaction), and per-row actions to link/unlink a transaction or
+delete the document.
+
+## Phase 6 - Financial Memory
+
+`App.kt`'s bottom `NavigationBar` gains a fourth destination, "Memory".
+`MemoryScreen` (state/wiring) + `MemoryScreenBody` (layout) show an
+inline record-a-memory form (title, description, a NOTE/MILESTONE
+toggle rendered as two `TextButton`s with a "●" marking the selected
+type - text, never color alone) above the chronological timeline.
+`MemoryEventRow` renders each entry with a "★" (milestone,
+`OpfisColors.Warning`) or "✎" (note, `OpfisColors.InformationNeutralBlue`)
+glyph paired with its tint, plus a delete action.

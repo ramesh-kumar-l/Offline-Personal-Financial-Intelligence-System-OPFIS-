@@ -104,3 +104,44 @@ of the new `SearchScreen`). `composeApp/.../search/` adds bottom
 `NavigationBar`-driven navigation between `DashboardScreen` and
 `SearchScreen`. First use of `kotlin.uuid.Uuid` for client-generated
 entity ids (creating a `Tag` from the UI).
+
+## Document Intelligence (Phase 5, see `16-document-engine.md`)
+
+Adds `Document` (`:domain`) following the existing entity+port+use-case
+pattern, plus two new platform-scoped ports beyond the usual
+`DocumentRepository`: `DocumentStoragePort` (owns raw file bytes on
+disk - the database only ever stores a `storagePath`, never the file
+content) and `DocumentTextExtractorPort` (PDF-text/OCR extraction,
+never throws - returns `""` so import always succeeds even when no
+text can be recovered). Both are `expect`/`actual`-backed per platform
+in `:data`: Desktop reads a digital PDF's embedded text via Apache
+PDFBox, falling back to Tesseract OCR (`tess4j`) for images or scanned
+PDFs; Android has no bundled PDF-text API, so every PDF page is
+rendered to a bitmap via `PdfRenderer` and OCR'd with ML Kit's
+on-device text recognizer (fully offline, no Play Services network
+call). Schema v5 (`migrations/4.sqm`) adds a `document` table wired
+into Phase 4's `search_index` FTS5 table via the same trigger-based
+sync pattern, so imported documents are globally searchable
+immediately (`SearchResult` gained `DocumentMatch`). Presentation adds
+a third bottom-nav destination, "Vault" (`DocumentVaultScreen` +
+`DocumentVaultScreenBody`), with a `DocumentPicker` `expect`/`actual`
+(`java.awt.FileDialog` on Desktop, `ActivityResultContracts.GetContent()`
+on Android) launching the OS file picker.
+
+## Financial Memory (Phase 6, see `13-memory-engine.md`)
+
+Two new `:domain` packages follow the existing entity+port+use-case
+pattern: `memory/` (`MemoryEvent`, manually recorded NOTE/MILESTONE
+entries) and `relationship/` (`Relationship`, a typed user-declared
+link between two entities, plus a pure `KnowledgeGraphBuilder`
+projecting a root entity's relationships into a 1-hop read model - not
+a full transitive graph traversal). Both reference entities generically
+via a new cross-cutting `domain/entity/` package (`EntityType`,
+`EntityRef`), kept deliberately separate from Phase 4's
+`SearchEntityType`. Schema v6 adds `memory_event` (wired into the FTS5
+`search_index`, same trigger pattern as every other content-bearing
+table) and `relationship` (not search-indexed - no free text).
+Presentation adds a 4th bottom-nav destination, "Memory"
+(`MemoryScreen` + `MemoryScreenBody` + `MemoryEventRow`); the
+`Relationship`/`KnowledgeGraph` engine has no UI yet, by design (exit
+criteria was "financial memory engine," not a full UI).

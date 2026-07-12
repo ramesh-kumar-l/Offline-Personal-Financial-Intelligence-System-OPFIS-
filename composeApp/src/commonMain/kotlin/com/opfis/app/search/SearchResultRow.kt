@@ -27,6 +27,8 @@ fun SearchResultRow(result: SearchResult) {
             is SearchResult.TagMatch -> "Tag: ${result.tag.name}" to OpfisColors.Warning
             is SearchResult.DocumentMatch ->
                 "Document: ${result.document.fileName}" to OpfisColors.InformationNeutralBlue
+            is SearchResult.MemoryEventMatch ->
+                "Memory: ${result.memoryEvent.title}" to OpfisColors.Warning
         }
     Text(label, style = MaterialTheme.typography.bodyMedium, color = tint)
 }

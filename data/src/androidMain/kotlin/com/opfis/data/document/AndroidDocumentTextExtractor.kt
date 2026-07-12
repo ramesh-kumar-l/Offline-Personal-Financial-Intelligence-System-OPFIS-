@@ -46,15 +46,19 @@ class AndroidDocumentTextExtractor(
         return try {
             tempFile.writeBytes(bytes)
             ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
-                PdfRenderer(pfd).use { renderer ->
-                    (0 until renderer.pageCount).joinToString(separator = "\n") { index ->
-                        renderer.openPage(index).use { page -> recognizeText(renderPage(page)) }
-                    }
-                }
+                PdfRenderer(pfd).use { renderer -> recognizeAllPages(renderer) }
             }
         } finally {
             tempFile.delete()
         }
+    }
+
+    private suspend fun recognizeAllPages(renderer: PdfRenderer): String {
+        val pageTexts = mutableListOf<String>()
+        for (index in 0 until renderer.pageCount) {
+            renderer.openPage(index).use { page -> pageTexts += recognizeText(renderPage(page)) }
+        }
+        return pageTexts.joinToString(separator = "\n")
     }
 
     private fun renderPage(page: PdfRenderer.Page): Bitmap {

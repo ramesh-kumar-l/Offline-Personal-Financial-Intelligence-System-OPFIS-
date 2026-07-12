@@ -50,6 +50,25 @@ class SchemaMigrationTest {
         assertEquals("Offline Mode", row.label)
         assertEquals(1L, row.version)
 
+        // Also proves migrations 4.sqm/5.sqm (Phase 5 document, Phase 6 memory/relationship) applied cleanly.
+        database.memoryEventQueries.insertOrReplace(
+            id = "mem-1",
+            event_type = "NOTE",
+            title = "Test note",
+            description = "",
+            subject_entity_type = null,
+            subject_entity_id = null,
+            occurred_at = 1000L,
+            created_at = 1000L,
+            updated_at = 1000L,
+            version = 1L,
+        )
+        val memoryEvents =
+            database.memoryEventQueries
+                .selectAll()
+                .executeAsList()
+        assertEquals(1, memoryEvents.size)
+
         driver.close()
         Files.deleteIfExists(dbFile)
     }

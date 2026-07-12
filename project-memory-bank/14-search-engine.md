@@ -25,6 +25,29 @@ query `Flow<String>` and a `SearchFilter` `Flow` into
 Timeline section), not to FTS5 global text search - text relevance and
 record browsing are treated as separate concerns by design.
 
-Phase 5 will extend `search_index` with a `document`/`extracted_text`
-source (see `05-current-state.md` for status) using the same
-trigger-based sync pattern.
+## Phase 5 - document search (implemented)
+
+`search_index` gained a `document`/`extracted_text` source: the
+`document_search_ai`/`document_search_ad` triggers (`migrations/4.sqm`)
+fold `file_name || ' ' || extracted_text` into the FTS5 table under
+`entity_type = 'DOCUMENT'` on import/delete, using the same
+delete-then-insert `AFTER INSERT` pattern as every other source table.
+`SearchResult` gained `DocumentMatch`; no changes were needed to
+`SqlSearchIndexRepository`, `FtsQueryBuilder`, or
+`SearchFinancialRecordsUseCase` - `DOCUMENT` is just another
+`SearchEntityType` value flowing through the existing per-entity-type
+query/union/`SearchResult`-mapping path. See `16-document-engine.md`
+for how `extractedText` itself is produced (PDF-text/OCR).
+
+## Phase 6 - memory event search (implemented)
+
+`search_index` gained a `memory_event`/`title`+`description` source,
+via the same trigger pattern as every other content-bearing table.
+`SearchResult` gained `MemoryEventMatch`; `SqlSearchIndexRepository`
+gained a sixth `searchMemoryEvents` branch, and since
+`kotlinx.coroutines.flow.combine` only has typed-tuple overloads up to
+5 flows, the 6-source `combine` call switched to the vararg-array
+overload (`combine(f1, ..., f6) { results: Array<List<SearchResult>> ->
+results.toList().flatten() }`). `Relationship` (also Phase 6) is
+deliberately not search-indexed - it has no free text, only typed
+entity references. See `13-memory-engine.md`.

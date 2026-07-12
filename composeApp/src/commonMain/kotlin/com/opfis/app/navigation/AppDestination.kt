@@ -8,4 +8,5 @@ enum class AppDestination(
     Dashboard("Home", "⌂"),
     Search("Search", "🔍"),
     Vault("Vault", "📄"),
+    Memory("Memory", "🕒"),
 }

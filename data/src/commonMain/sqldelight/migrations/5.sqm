@@ -1,0 +1,40 @@
+CREATE TABLE memory_event (
+    id TEXT NOT NULL PRIMARY KEY,
+    event_type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    subject_entity_type TEXT,
+    subject_entity_id TEXT,
+    occurred_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE INDEX memory_event_subject ON memory_event (subject_entity_type, subject_entity_id);
+
+CREATE TABLE relationship (
+    id TEXT NOT NULL PRIMARY KEY,
+    from_entity_type TEXT NOT NULL,
+    from_entity_id TEXT NOT NULL,
+    to_entity_type TEXT NOT NULL,
+    to_entity_id TEXT NOT NULL,
+    relationship_type TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE INDEX relationship_from ON relationship (from_entity_type, from_entity_id);
+
+CREATE INDEX relationship_to ON relationship (to_entity_type, to_entity_id);
+
+CREATE TRIGGER memory_event_search_ai AFTER INSERT ON memory_event BEGIN
+    DELETE FROM search_index WHERE entity_type = 'MEMORY_EVENT' AND entity_id = new.id;
+    INSERT INTO search_index(entity_type, entity_id, text)
+    VALUES ('MEMORY_EVENT', new.id, new.title || ' ' || new.description);
+END;
+
+CREATE TRIGGER memory_event_search_ad AFTER DELETE ON memory_event BEGIN
+    DELETE FROM search_index WHERE entity_type = 'MEMORY_EVENT' AND entity_id = old.id;
+END;
