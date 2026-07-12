@@ -2,15 +2,24 @@
 
 ## Current phase
 
-Phase 7 - Local AI (ROADMAP.md) implemented and tested; Phases 0-6
-remain closed. Phase 8 (Security: biometrics, auto-lock, backup
-encryption, audit log) is next - not yet started, no owner instruction
-received to begin it.
+Phase 8 - Security (ROADMAP.md) implemented and tested; Phases 0-7
+remain closed. Phase 9 (Import/Export: CSV, JSON, encrypted backup,
+restore) is next - not yet started, no owner instruction received to
+begin it.
 
 ## Active tasks
 
-- Await owner review/direction on Phase 8 (Security) before starting -
-  see `04-roadmap.md`.
+- Await owner review/direction on Phase 9 (Import/Export) before
+  starting - see `04-roadmap.md`.
+- When Phase 9 builds the real backup/restore UI, wire
+  `RecordAuditEventUseCase` around it directly (`AuditEventType`
+  already has `BACKUP_EXPORTED`/`BACKUP_RESTORED` ready) - Phase 8
+  deliberately did not add `ExportBackupUseCase`/`RestoreBackupUseCase`
+  since there was no caller for them yet.
+- Full OS keychain/DPAPI integration for Desktop's database key is
+  still open - Phase 8 only added owner-only file permissions/ACL
+  hardening, not the ADR 0005-flagged full integration - see
+  `09-security-model.md`.
 - Consider a real local LLM/embedding model binding for `LocalAiPort`
   if/when one becomes feasible in this environment (bundled weights,
   ONNX Runtime/llama.cpp integration) - `RuleBasedLocalAiEngine` is a

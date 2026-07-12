@@ -143,3 +143,21 @@ SystemPrompt Part 3 forbids this).
 
 See `15-ai-runtime.md` for `LocalAiPort`, `AiIntentClassifier`, and the
 per-intent responder objects that compose `AiAnswer`s.
+
+## Phase 8 additions
+
+- **AuditLogEntry** (`audit/`) - `id, eventType, description,
+  occurredAt`. Append-only: `AuditLogRepository` exposes `record`/
+  `observeAll` only, no update/delete - an audit trail must stay
+  trustworthy.
+- **AuditEventType** (`audit/`) - `APP_UNLOCKED, APP_UNLOCK_FAILED,
+  BACKUP_EXPORTED, BACKUP_RESTORED`. The two `BACKUP_*` values have no
+  producer yet - they're ready for Phase 9's backup/restore UI to
+  record directly.
+- **AutoLockPolicy** (`security/`, pure, not an entity) - a stateless
+  idle-timeout check (`shouldLock(lastInteractionAt, now, timeout)`);
+  the actual lock state lives in `composeApp`'s `AppLockState`, not
+  `:domain`.
+- No new persisted financial-domain entities this phase - Phase 8 is a
+  cross-cutting security layer over the existing data, not new
+  financial data itself.

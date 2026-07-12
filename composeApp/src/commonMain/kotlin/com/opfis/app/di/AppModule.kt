@@ -12,6 +12,8 @@ import com.opfis.domain.ai.usecase.RetrieveFinancialContextUseCase
 import com.opfis.domain.asset.usecase.DeleteAssetUseCase
 import com.opfis.domain.asset.usecase.ObserveAssetsUseCase
 import com.opfis.domain.asset.usecase.UpsertAssetUseCase
+import com.opfis.domain.audit.usecase.ObserveAuditLogUseCase
+import com.opfis.domain.audit.usecase.RecordAuditEventUseCase
 import com.opfis.domain.budget.usecase.DeleteBudgetUseCase
 import com.opfis.domain.budget.usecase.ObserveBudgetsUseCase
 import com.opfis.domain.budget.usecase.UpsertBudgetUseCase
@@ -141,4 +143,6 @@ val appModule =
         factory { RetrieveFinancialContextUseCase(searchPort = get()) }
         factory<LocalAiPort> { RuleBasedLocalAiEngine(snapshotUseCase = get(), retrieval = get()) }
         factory { AskAiAssistantUseCase(localAi = get()) }
+        factory { RecordAuditEventUseCase(repository = get()) }
+        factory { ObserveAuditLogUseCase(repository = get()) }
     }

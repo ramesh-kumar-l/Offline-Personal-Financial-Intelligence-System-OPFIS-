@@ -62,3 +62,19 @@ renders the question, the answer text, and its `AiCitation`s via
 `AiCitationRow`, which pairs every entity kind with a fixed
 `OpfisColors` tint and a text prefix (`"ACCOUNT: ..."` etc.) - never
 color alone, matching `SearchResultRow`'s convention.
+
+## Phase 8 - Lock gate + Security screen
+
+`App.kt` now wraps its entire bottom-nav `Scaffold` in a lock gate:
+while `AppLockState.isLocked`, `LockScreen` (+ `LockScreenBody`) renders
+full-screen instead - a "🔒" glyph, a status message, and either an
+"Unlock" button (triggers the platform biometric prompt) or, if
+biometrics are unavailable, a distinctly-labeled "Confirm to unlock"
+fallback button, with an inline error message (text + `OpfisColors.Error`,
+never color alone) on a failed attempt. The bottom `NavigationBar`
+gains a sixth destination, "Security" (`AppDestination.Security`,
+"🔒"). `SecurityScreen` (+ `SecurityScreenBody` + `AuditLogRow`) shows a
+policy-summary card above the audit trail; each `AuditLogRow` pairs a
+fixed glyph ("🔓" unlocked, "⚠" unlock failed, "⇧"/"⇩" backup exported/
+restored) with a fixed `OpfisColors` tint and the event's text label -
+same "never color alone" convention as every prior phase's rows.

@@ -1,10 +1,11 @@
 package com.opfis.app
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.fragment.app.FragmentActivity
 
-class MainActivity : ComponentActivity() {
+/** [FragmentActivity] (not plain `ComponentActivity`) so `androidx.biometric.BiometricPrompt` can host its dialog. */
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {

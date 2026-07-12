@@ -35,3 +35,12 @@ allTests assemble` all green - see `05-current-state.md`).
   this offline environment, so Phase 7 shipped `LocalAiPort` (the
   abstraction) with a deterministic rule-engine default binding
   instead. See `15-ai-runtime.md`.
+- `androidx.biometric:biometric` 1.1.0 (Phase 8, androidMain only) for
+  real device biometric/device-credential authentication -
+  `androidx.biometric.BiometricPrompt` needs a `FragmentActivity`, so
+  `MainActivity` now extends `FragmentActivity` instead of
+  `ComponentActivity`. No JVM-side biometric API exists for Desktop
+  (documented gap, see `09-security-model.md`). Desktop's SQLCipher key
+  file gained owner-only file permissions/ACL hardening in Phase 8, but
+  full OS keychain/DPAPI integration (ADR 0005's original Phase 8
+  follow-up) is still not implemented.

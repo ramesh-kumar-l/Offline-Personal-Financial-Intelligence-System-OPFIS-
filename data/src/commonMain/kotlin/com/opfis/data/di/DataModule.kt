@@ -2,6 +2,7 @@ package com.opfis.data.di
 
 import com.opfis.data.account.SqlAccountRepository
 import com.opfis.data.asset.SqlAssetRepository
+import com.opfis.data.audit.SqlAuditLogRepository
 import com.opfis.data.budget.SqlBudgetRepository
 import com.opfis.data.category.SqlCategoryRepository
 import com.opfis.data.document.SqlDocumentRepository
@@ -17,6 +18,7 @@ import com.opfis.data.transaction.SqlFinancialLedger
 import com.opfis.data.transaction.SqlTransactionRepository
 import com.opfis.domain.account.AccountRepository
 import com.opfis.domain.asset.AssetRepository
+import com.opfis.domain.audit.AuditLogRepository
 import com.opfis.domain.budget.BudgetRepository
 import com.opfis.domain.category.CategoryRepository
 import com.opfis.domain.document.DocumentRepository
@@ -61,4 +63,5 @@ val dataModule =
         singleOf(::SqlDocumentRepository) { bind<DocumentRepository>() }
         singleOf(::SqlMemoryEventRepository) { bind<MemoryEventRepository>() }
         singleOf(::SqlRelationshipRepository) { bind<RelationshipRepository>() }
+        singleOf(::SqlAuditLogRepository) { bind<AuditLogRepository>() }
     }

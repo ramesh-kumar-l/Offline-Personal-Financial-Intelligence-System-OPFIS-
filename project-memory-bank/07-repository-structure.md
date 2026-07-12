@@ -96,3 +96,18 @@ engine only reads through existing repository ports (same "read-only
 phase" pattern as Phase 3). `composeApp/.../ai/` (`AiAssistantScreen` +
 `AiAssistantScreenBody` + `AiCitationRow`) and a fifth `NavigationBar`
 destination ("Assistant") in `App.kt`.
+
+Phase 8 adds: `domain/.../security/` (`AutoLockPolicy`, pure policy,
+no port/usecase) and `domain/.../audit/` (`AuditLogEntry`/
+`AuditEventType`, `AuditLogRepository`, `audit/usecase/`
+[`RecordAuditEventUseCase`, `ObserveAuditLogUseCase`]); `data/.../audit/`
+(`SqlAuditLogRepository`) plus `data/.../db/` schema gaining
+`AuditLog.sq` and `migrations/6.sqm`; `data/.../db/DatabaseKeyProvider.desktop.kt`
+hardened with owner-only file permissions/ACL (no schema change).
+`composeApp/.../security/` (`BiometricAuth` `expect`/`actual` in
+`commonMain`/`androidMain`/`desktopMain`, `AppLockState`, `LockScreen` +
+`LockScreenBody`, `SecurityScreen` + `SecurityScreenBody` +
+`AuditLogRow`) and a sixth `NavigationBar` destination ("Security") in
+`App.kt`, which now also wraps its content in a lock gate.
+`composeApp/androidMain/.../MainActivity.kt` changed from
+`ComponentActivity` to `FragmentActivity` to host `BiometricPrompt`.

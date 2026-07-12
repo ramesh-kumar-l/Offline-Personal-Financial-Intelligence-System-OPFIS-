@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-07-12 (Phases 0-6 closed; Phase 7 Local AI
+Last updated: 2026-07-12 (Phases 0-7 closed; Phase 8 Security
 implemented and tested)
 
 ## Implemented
@@ -332,12 +332,100 @@ implemented and tested)
   (2) one detekt `MaxLineLength` in a KDoc comment on
   `CashFlowResponder.kt`, fixed by shortening the comment.
 
+### Phase 8 - Security (implemented and tested)
+
+- Domain: `domain/.../security/AutoLockPolicy.kt` - a pure idle-timeout
+  policy object (`shouldLock(lastInteractionAt, now, timeoutMillis =
+  5 min)`), same framework-free policy pattern as
+  `TransactionLedgerRules`/`NetWorthCalculator`. `domain/.../audit/`
+  follows the standard entity+port+usecase pattern: `AuditLogEntry`
+  (`id, eventType, description, occurredAt`, append-only - no
+  update/delete on the repository), `AuditEventType` (`APP_UNLOCKED`,
+  `APP_UNLOCK_FAILED`, `BACKUP_EXPORTED`, `BACKUP_RESTORED`),
+  `AuditLogRepository`, `RecordAuditEventUseCase`,
+  `ObserveAuditLogUseCase`.
+- Biometrics is presentation-layer, not a domain port - like Phase 5's
+  `DocumentPicker`, `androidx.biometric.BiometricPrompt` needs a live
+  `FragmentActivity`, which a Koin-injected domain port can't obtain.
+  `composeApp/.../security/BiometricAuth.kt` declares
+  `@Composable expect fun rememberBiometricAuthLauncher(onResult):
+  () -> Unit` + a `BiometricAuthResult` sealed type (`Success`,
+  `Failed`, `Error`, `NotAvailable`). Android's actual checks
+  `BiometricManager.canAuthenticate` first and shows a real
+  `BiometricPrompt` (biometric or device-credential fallback);
+  `MainActivity` now extends `FragmentActivity` (was
+  `ComponentActivity`) to host it. Desktop's actual always resolves to
+  `NotAvailable` - there is no OS-uniform biometric API on the JVM, a
+  documented gap, not a silent omission.
+- Auto-lock: `composeApp/.../security/AppLockState.kt` is a `@Stable`
+  presentation state holder - the app starts locked; navigating
+  between bottom-nav destinations counts as "interaction" (a
+  lighter-weight, deliberately simpler signal than raw touch-event
+  tracking across every screen - see the gap note below) and re-arms
+  the idle timer, checked once a second from `App.kt` via
+  `AutoLockPolicy`. `LockScreen` (+ `LockScreenBody`) is the full-screen
+  gate: tapping "Unlock" invokes the biometric launcher; `Success`
+  unlocks and audits `APP_UNLOCKED`; `Failed`/`Error` audits
+  `APP_UNLOCK_FAILED` and lets the user retry; `NotAvailable` (Desktop)
+  switches to a "Confirm to unlock" manual fallback that still requires
+  an explicit tap and is still audited (as a manual-confirmation
+  unlock, distinctly worded from a biometric one), rather than silently
+  bypassing the lock screen.
+- Backup encryption: interpreted as hardening the key that both the
+  live database *and* any future backup inherit their encryption from
+  (ADR 0005's explicit Phase 8 follow-up), not as building Phase 9's
+  portable passphrase-based backup UX. `DatabaseKeyProvider.desktop.kt`
+  now restricts the generated key file to the owning OS account after
+  writing it - POSIX permissions (`rw-------`) where supported, or a
+  best-effort Windows ACL (single owner-only `AclEntry`) + hidden
+  attribute otherwise - narrowing ADR 0005's flagged weak point ("any
+  process on the machine could read the key file") to the owning user
+  account. Full OS keychain/DPAPI integration remains unimplemented -
+  see the gap note below. Android's key storage was already
+  Keystore-backed (`EncryptedSharedPreferences`) since Phase 1;
+  unchanged this phase. `ExportBackupUseCase`/`RestoreBackupUseCase`
+  were deliberately **not** added - there is still no backup UI to call
+  them from (Phase 9 owns that), and CLAUDE.md's "no speculative,
+  unwired code" rule argues against adding use cases with no caller;
+  `AuditEventType` already has `BACKUP_EXPORTED`/`BACKUP_RESTORED`
+  ready for Phase 9 to record directly.
+- Presentation: a 6th bottom-nav destination, "Security"
+  (`composeApp/.../security/SecurityScreen` + `SecurityScreenBody` +
+  `AuditLogRow`) - a policy-summary card above the audit trail list.
+  `App.kt` now wraps the whole `Scaffold`/nav tree in a lock gate: a
+  `LaunchedEffect` ticks every second calling
+  `AppLockState.checkIdleTimeout()`; while `isLocked`, `LockScreen()`
+  renders instead of the app content.
+- New dependency: `androidx.biometric:biometric:1.1.0` (androidMain
+  only; the latest stable release - `1.4.0` does not exist, only
+  alpha07, confirmed against Google Maven's metadata before pinning).
+- Tests: `AutoLockPolicyTest` (3 cases: before/at/well-past the
+  timeout), `AuditLogUseCasesTest` (record delegates to the repository,
+  observe returns the repository's stream) - fakes follow the
+  established `FakeAccountRepository`-style pattern. All pass on both
+  `desktopTest` and Android `testDebugUnitTest`. Every new file is
+  under 300 lines (largest: `LockScreen.kt`, ~90 lines).
+- Full build gate (`ktlintCheck detekt allTests assemble`, Android +
+  Desktop) green: `BUILD SUCCESSFUL in 6m 2s`, 395 tasks. Took 3
+  attempts: (1) `androidx.biometric:biometric:1.4.0` does not exist on
+  Google Maven (only alpha pre-releases past `1.1.0`) - pinned to the
+  actual latest stable, `1.1.0`; (2) one detekt `SpreadOperator` finding
+  on `DatabaseKeyProvider.desktop.kt`'s ACL-permissions call - fixed by
+  passing `AclEntryPermission.entries.toSet()` to the `Set`-typed
+  overload instead of spreading a `toTypedArray()` into a vararg call;
+  (3) `BUILD SUCCESSFUL in 6m 2s` - confirmed via the literal log text
+  (the task-notification again claimed "exit code 0" on the failing
+  first run - the same unreliable-signal pattern documented in every
+  prior phase).
+
 ## Known gaps / not yet verified
 
 - Android's encrypted driver path has no instrumented test (no
   emulator/device in this environment) - unchanged from Phase 1.
-- `androidx.security.crypto` deprecation and Desktop key-file hardening
-  remain explicit Phase 8 follow-ups (ADR 0005) - unchanged.
+- `androidx.security.crypto` deprecation remains open; Desktop key-file
+  hardening got a partial Phase 8 pass (owner-only file permissions/ACL)
+  but full OS keychain/DPAPI integration is still not implemented - see
+  the Phase 8 section above and `09-security-model.md`.
 - AGP 9's compatibility flags (ADR 0004) remain a deprecated-but-working
   path with a shelf life before AGP 10.0 - unchanged.
 - No ID-generation utility exists yet for new Phase 2 entities (use
@@ -376,9 +464,21 @@ implemented and tested)
   `AiIntentClassifier` is a fixed English keyword list with no fuzzy
   matching or confidence scoring. The AI conversation history is
   session-only, not persisted, and does not create `MemoryEvent`s.
+- Phase 8's Desktop biometric fallback is a manual "Confirm to unlock"
+  tap, not real authentication - there is no OS-uniform biometric API
+  on the JVM. Auto-lock's "interaction" signal is bottom-nav navigation
+  only, not raw touch/scroll tracking across every screen (a
+  deliberate simplification to avoid a global pointer-event interceptor
+  that could interfere with existing gesture handling - see
+  `09-security-model.md`). Desktop key-file hardening is owner-only
+  file permissions/ACL, not full OS keychain/DPAPI integration.
+  `ExportBackupUseCase`/`RestoreBackupUseCase` were not built this
+  phase (no UI to call them from yet - `AuditEventType` is ready for
+  Phase 9 to use). The audit log has no UI to prune/export it and no
+  retention policy (append-only, grows unbounded).
 
 ## Pending
 
-- Phase 8 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 8
-  "Security" (biometrics, auto-lock, backup encryption, audit log) -
-  not yet started.
+- Phase 9 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 9
+  "Import/Export" (CSV, JSON, encrypted backup, restore) - not yet
+  started.

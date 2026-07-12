@@ -164,3 +164,22 @@ based, for the same "no downloadable model" reason. Presentation adds a
 5th bottom-nav destination, "Assistant" (`AiAssistantScreen` +
 `AiAssistantScreenBody` + `AiCitationRow`), a question box above a
 session-local (not persisted) conversation history.
+
+## Security (Phase 8, see `09-security-model.md`)
+
+`domain/.../security/AutoLockPolicy.kt` (pure idle-timeout policy) and
+`domain/.../audit/` (`AuditLogEntry`/`AuditEventType`,
+`AuditLogRepository`, 2 use cases) follow the established policy-object
+and entity+port+usecase patterns respectively. Biometrics breaks the
+"UI-needing platform capability" pattern out of `:domain` entirely -
+like Phase 5's `DocumentPicker`, `androidx.biometric.BiometricPrompt`
+needs a live `FragmentActivity`, which a Koin-injected domain port
+can't supply, so its equivalent (`rememberBiometricAuthLauncher`) is a
+`composeApp`-only `@Composable expect`/`actual` function, never a
+domain interface. `AppLockState` (presentation-only `@Stable` state
+holder) gates the entire `App.kt` composition behind `LockScreen` until
+unlocked; every unlock attempt (biometric success/failure, or
+Desktop's manual "Confirm to unlock" fallback) is written to the audit
+log via `RecordAuditEventUseCase`. Presentation adds a 6th bottom-nav
+destination, "Security" (`SecurityScreen` + `SecurityScreenBody` +
+`AuditLogRow`).

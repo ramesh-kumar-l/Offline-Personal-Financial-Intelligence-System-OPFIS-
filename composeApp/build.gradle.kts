@@ -39,6 +39,7 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.sqlcipher.android)
             implementation(libs.androidx.sqlite.framework)
+            implementation(libs.androidx.biometric)
         }
 
         val desktopMain by getting {

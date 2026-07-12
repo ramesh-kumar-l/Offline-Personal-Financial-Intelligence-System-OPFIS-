@@ -14,6 +14,7 @@ sqlite-jdbc-willena = "3.50.1.0"
 pdfbox = "3.0.8"
 tess4j = "5.19.0"
 mlkit-text-recognition = "16.0.1"
+androidx-biometric = "1.1.0"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -34,6 +35,7 @@ androidx-sqlite-framework = { module = "androidx.sqlite:sqlite-framework", versi
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 tess4j = { module = "net.sourceforge.tess4j:tess4j", version.ref = "tess4j" }
 mlkit-text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "mlkit-text-recognition" }
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "androidx-biometric" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
