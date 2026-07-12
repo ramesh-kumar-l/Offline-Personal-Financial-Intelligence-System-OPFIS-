@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-07-12 (Phases 0-5 closed; Phase 6 Financial Memory
+Last updated: 2026-07-12 (Phases 0-6 closed; Phase 7 Local AI
 implemented and tested)
 
 ## Implemented
@@ -278,6 +278,60 @@ implemented and tested)
   `SearchResult.MemoryEventMatch` branch. See `30-session-handoff.md`
   for full detail.
 
+### Phase 7 - Local AI (implemented and tested)
+
+- Domain: `LocalAiPort` (`answer(question, asOfEpochMillis): AiAnswer`)
+  is the local-model abstraction; its only binding,
+  `RuleBasedLocalAiEngine` (`ai/engine/`), is a deterministic rule
+  engine, not a neural model - no model weights can be downloaded in
+  this offline sandboxed environment, a scope decision confirmed by the
+  user before implementation began (see `15-ai-runtime.md`). The engine
+  classifies question intent via `AiIntentClassifier` (keyword-based:
+  `NET_WORTH`/`CASH_FLOW`/`SPENDING`/`BUDGET`/`GOAL`/`GENERAL`), builds
+  a one-shot `FinancialSnapshot` (`BuildFinancialSnapshotUseCase`
+  reading through a bundled `FinancialRepositories` holder - 7
+  repositories in one constructor parameter, avoiding a detekt
+  `LongParameterList` finding the same way Phase 5's
+  `ImportDocumentRequest` did), and dispatches to one of six responder
+  objects (`ai/engine/responder/`), each reusing an existing
+  calculator/port rather than re-deriving logic: `NetWorthResponder`
+  (Phase 3's `NetWorthCalculator`), `CashFlowResponder` (Phase 3's
+  `CashFlowCalculator`), `SpendingResponder` (category-name keyword
+  match over expense transactions), `BudgetResponder` (lists limits,
+  explicitly states spend-to-date tracking is not implemented - a
+  pre-existing Phase 2 gap), `GoalResponder` (current-vs-target
+  progress), `GeneralResponder` (falls back to semantic retrieval).
+  Every `AiAnswer(text, citations: List<AiCitation>)` cites the real
+  `EntityType`/id/label it was derived from (ROADMAP "Explainable
+  answers"). `RetrieveFinancialContextUseCase` (`ai/usecase/`) is the
+  semantic-retrieval layer - lexical (Phase 4's FTS5 `SearchPort`), not
+  vector-embedding-based, since no embedding model is available fully
+  offline either; a deliberate, documented scope cut. `AiMoneyFormatter`
+  intentionally duplicates `composeApp`'s `MoneyFormatter` since
+  `:domain` cannot depend on the Presentation layer.
+- No schema/`:data` changes - read-only phase, same pattern as Phase 3.
+- Presentation: a 5th bottom-nav destination, "Assistant"
+  (`composeApp/.../ai/AiAssistantScreen` + `AiAssistantScreenBody` +
+  `AiCitationRow`) - a question box above a session-local (not
+  persisted) conversation history.
+- Tests: `AiIntentClassifierTest` (6 cases across all 6 intents),
+  `RetrieveFinancialContextUseCaseTest` (mapping + limit, fake
+  `SearchPort`), `RuleBasedLocalAiEngineTest` (5 cases: net worth
+  citing accounts, spending narrowed to a mentioned category, budget
+  listing limits without claiming spend status, goal progress, general
+  fallback with no matches) - fakes for all 7 repositories + `SearchPort`
+  following the established `FakeAccountRepository`-style pattern. All
+  pass on both `desktopTest` and Android `testDebugUnitTest`. Every new
+  file is under 300 lines (largest: `RuleBasedLocalAiEngineTest.kt`,
+  ~190 lines).
+- Full build gate (`ktlintCheck detekt allTests assemble`, Android +
+  Desktop) green: `BUILD SUCCESSFUL in 1m 35s`, 395 tasks. Took 3
+  attempts: (1) 20+ ktlint argument/parameter-wrapping and
+  chain-method-continuation violations across 4 new files, fixed with
+  `./gradlew ktlintFormat` (auto-fix) rather than hand-editing each one;
+  (2) one detekt `MaxLineLength` in a KDoc comment on
+  `CashFlowResponder.kt`, fixed by shortening the comment.
+
 ## Known gaps / not yet verified
 
 - Android's encrypted driver path has no instrumented test (no
@@ -317,9 +371,14 @@ implemented and tested)
 - Phase 6's `Relationship`/`KnowledgeGraph` engine (domain + data +
   tests) has no presentation layer yet - only `MemoryEvent` got a
   screen this phase.
+- Phase 7's `LocalAiPort` has no real local LLM/embedding-model
+  binding - `RuleBasedLocalAiEngine` is deterministic, not neural.
+  `AiIntentClassifier` is a fixed English keyword list with no fuzzy
+  matching or confidence scoring. The AI conversation history is
+  session-only, not persisted, and does not create `MemoryEvent`s.
 
 ## Pending
 
-- Phase 7 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 7 "Local
-  AI" (local model abstraction, AI assistant, explainable answers,
-  semantic retrieval) - not yet started.
+- Phase 8 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 8
+  "Security" (biometrics, auto-lock, backup encryption, audit log) -
+  not yet started.

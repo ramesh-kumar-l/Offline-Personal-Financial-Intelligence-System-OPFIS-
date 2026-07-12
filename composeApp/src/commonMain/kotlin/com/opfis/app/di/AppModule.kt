@@ -3,6 +3,12 @@ package com.opfis.app.di
 import com.opfis.domain.account.usecase.DeleteAccountUseCase
 import com.opfis.domain.account.usecase.ObserveAccountsUseCase
 import com.opfis.domain.account.usecase.UpsertAccountUseCase
+import com.opfis.domain.ai.FinancialRepositories
+import com.opfis.domain.ai.LocalAiPort
+import com.opfis.domain.ai.engine.RuleBasedLocalAiEngine
+import com.opfis.domain.ai.usecase.AskAiAssistantUseCase
+import com.opfis.domain.ai.usecase.BuildFinancialSnapshotUseCase
+import com.opfis.domain.ai.usecase.RetrieveFinancialContextUseCase
 import com.opfis.domain.asset.usecase.DeleteAssetUseCase
 import com.opfis.domain.asset.usecase.ObserveAssetsUseCase
 import com.opfis.domain.asset.usecase.UpsertAssetUseCase
@@ -120,4 +126,19 @@ val appModule =
         factory { CreateRelationshipUseCase(repository = get()) }
         factory { DeleteRelationshipUseCase(repository = get()) }
         factory { ObserveKnowledgeGraphUseCase(repository = get()) }
+        factory {
+            FinancialRepositories(
+                accounts = get(),
+                assets = get(),
+                liabilities = get(),
+                transactions = get(),
+                categories = get(),
+                budgets = get(),
+                goals = get(),
+            )
+        }
+        factory { BuildFinancialSnapshotUseCase(repositories = get()) }
+        factory { RetrieveFinancialContextUseCase(searchPort = get()) }
+        factory<LocalAiPort> { RuleBasedLocalAiEngine(snapshotUseCase = get(), retrieval = get()) }
+        factory { AskAiAssistantUseCase(localAi = get()) }
     }

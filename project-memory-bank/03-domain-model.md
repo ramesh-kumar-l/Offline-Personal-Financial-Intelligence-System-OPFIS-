@@ -124,3 +124,22 @@ SystemPrompt Part 3 forbids this).
   `root: EntityRef, neighbors: List<EntityRef>, edges: List<Relationship>`.
   Built by the pure `KnowledgeGraphBuilder.build(root, relationships)`
   from a root entity's `Relationship`s (1-hop only).
+
+## Phase 7 additions (read-only, not persisted)
+
+- **AiAnswer** / **AiCitation** (`ai/`) - `AiAnswer(text,
+  citations: List<AiCitation>)`; `AiCitation(entityType: EntityType,
+  entityId, label)` reuses Phase 6's `EntityType` so an answer can point
+  back to any addressable record.
+- **FinancialSnapshot** (`ai/`, derived, not persisted) - a one-shot
+  in-memory bundle of every Account/Asset/Liability/Transaction/
+  Category/Budget/Goal, built by `BuildFinancialSnapshotUseCase`
+  through the `FinancialRepositories` holder (7 repositories bundled
+  into one constructor parameter, same detekt `LongParameterList`
+  pattern as Phase 5's `ImportDocumentRequest`).
+- **RetrievedItem** (`ai/`) - `entityType, entityId, summary`; produced
+  by `RetrieveFinancialContextUseCase` wrapping Phase 4's `SearchPort`
+  for lexical (not vector) semantic retrieval - see `15-ai-runtime.md`.
+
+See `15-ai-runtime.md` for `LocalAiPort`, `AiIntentClassifier`, and the
+per-intent responder objects that compose `AiAnswer`s.

@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.opfis.app.ai.AiAssistantScreen
 import com.opfis.app.dashboard.DashboardScreen
 import com.opfis.app.document.DocumentVaultScreen
 import com.opfis.app.memory.MemoryScreen
@@ -44,6 +45,7 @@ fun App() {
                     AppDestination.Search -> SearchScreen()
                     AppDestination.Vault -> DocumentVaultScreen()
                     AppDestination.Memory -> MemoryScreen()
+                    AppDestination.Assistant -> AiAssistantScreen()
                 }
             }
         }

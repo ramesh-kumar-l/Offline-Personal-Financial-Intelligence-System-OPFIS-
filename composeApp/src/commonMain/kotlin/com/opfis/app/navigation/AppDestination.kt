@@ -9,4 +9,5 @@ enum class AppDestination(
     Search("Search", "🔍"),
     Vault("Vault", "📄"),
     Memory("Memory", "🕒"),
+    Assistant("Assistant", "🤖"),
 }

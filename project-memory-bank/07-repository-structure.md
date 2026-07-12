@@ -84,3 +84,15 @@ schema gaining `MemoryEvent.sq`/`Relationship.sq` and `migrations/5.sqm`;
 `composeApp/.../memory/` (`MemoryScreen` + `MemoryScreenBody` +
 `MemoryEventRow`) and a fourth `NavigationBar` destination ("Memory")
 in `App.kt`.
+
+Phase 7 adds: `domain/.../ai/` (`AiAnswer`, `AiCitation`, `AiIntent` +
+`AiIntentClassifier`, `LocalAiPort`, `RetrievedItem`,
+`FinancialRepositories`, `FinancialSnapshot`, `AiMoneyFormatter`,
+`ai/usecase/` [`BuildFinancialSnapshotUseCase`,
+`RetrieveFinancialContextUseCase`, `AskAiAssistantUseCase`],
+`ai/engine/` [`RuleBasedLocalAiEngine`], `ai/engine/responder/` [one
+object per `AiIntent`]) - no `:data` or schema changes, since the AI
+engine only reads through existing repository ports (same "read-only
+phase" pattern as Phase 3). `composeApp/.../ai/` (`AiAssistantScreen` +
+`AiAssistantScreenBody` + `AiCitationRow`) and a fifth `NavigationBar`
+destination ("Assistant") in `App.kt`.

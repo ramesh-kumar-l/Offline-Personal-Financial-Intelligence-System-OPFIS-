@@ -2,6 +2,84 @@
 
 Last session: 2026-07-12
 
+## Completed in Phase 7 session (Local AI)
+
+- Implemented Phase 7 per ROADMAP.md: `LocalAiPort` (local-model
+  abstraction) with `RuleBasedLocalAiEngine` as its default,
+  deterministic, fully-offline binding - explicitly confirmed with the
+  user before implementation, since no model weights can be downloaded
+  in this offline environment and a real ONNX Runtime/llama.cpp
+  integration was judged too large and too risky to complete reliably
+  in one session. New `domain/.../ai/` package: `AiAnswer`/`AiCitation`,
+  `AiIntent`/`AiIntentClassifier`, `FinancialRepositories`/
+  `FinancialSnapshot`, `AiMoneyFormatter`, `ai/usecase/`
+  (`BuildFinancialSnapshotUseCase`, `RetrieveFinancialContextUseCase`,
+  `AskAiAssistantUseCase`), `ai/engine/` (`RuleBasedLocalAiEngine` + 6
+  responder objects, one per intent, each reusing an existing Phase
+  2/3/4 calculator or port). No schema/`:data` changes - read-only
+  phase. New `composeApp/.../ai/` package (`AiAssistantScreen` +
+  `AiAssistantScreenBody` + `AiCitationRow`) as a 5th bottom-nav
+  destination, "Assistant". Full detail in `05-current-state.md` and
+  `15-ai-runtime.md` (rewritten from a 2-line stub).
+- Scope decisions made explicit, all confirmed via an `AskUserQuestion`
+  before coding began (see `15-ai-runtime.md`): (1) no real local LLM -
+  a deterministic rule engine behind a swappable port instead; (2)
+  semantic retrieval is lexical (reuses Phase 4's FTS5 `SearchPort`),
+  not vector-embedding-based, for the same "no downloadable model"
+  reason; (3) `AiMoneyFormatter` duplicates `composeApp`'s
+  `MoneyFormatter` rather than having `:domain` depend on Presentation.
+- The build gate took 3 attempts to go green: (1) ~20 ktlint
+  argument-list-wrapping/parameter-list-wrapping/chain-method-continuation
+  violations across `BudgetResponder.kt`, `SpendingResponder.kt`,
+  `RetrieveFinancialContextUseCase.kt`, `RuleBasedLocalAiEngineTest.kt`,
+  and an import-ordering violation in `AppModule.kt` - fixed in one
+  shot with `./gradlew ktlintFormat` (auto-fix) instead of hand-editing
+  each violation, which was much faster than the manual-fix approach
+  used in earlier phases; (2) one detekt `MaxLineLength` on a KDoc
+  comment in `CashFlowResponder.kt` (ktlint's formatter does not
+  rewrap comments), fixed by shortening the sentence; (3)
+  `BUILD SUCCESSFUL in 1m 35s`, 395 tasks - confirmed via the literal
+  log text, and cross-checked that all 14 new AI test cases (6
+  classifier + 3 retrieval + 5 engine) show `failures="0" errors="0"`
+  in both `desktopTest` and Android `testDebugUnitTest` result XML.
+- Lesson reinforced again this session: when a `--continue` Gradle run
+  fails only on ktlint style violations (not detekt/compile errors),
+  `./gradlew ktlintFormat` auto-fixes them in one pass far faster than
+  manually rewriting each wrapped argument list by hand - worth trying
+  first before hand-editing, reserving manual fixes for detekt/compile
+  issues the formatter can't touch.
+- Every new file is under 300 lines (largest:
+  `RuleBasedLocalAiEngineTest.kt`, ~190 lines).
+- Updated memory bank: `02-system-architecture.md`, `03-domain-model.md`,
+  `04-roadmap.md`, `05-current-state.md`, `06-tech-stack.md`,
+  `07-repository-structure.md`, `14-search-engine.md`,
+  `15-ai-runtime.md` (fleshed out from a 2-line stub),
+  `18-ui-design-system.md`, `26-active-initiatives.md`, this file.
+
+## Not completed (as of end of Phase 7 session)
+
+- No real local LLM or embedding model is integrated - `LocalAiPort`
+  has only the deterministic `RuleBasedLocalAiEngine` binding.
+- `AiIntentClassifier` has no fuzzy matching, synonym handling, or
+  confidence scoring - a fixed English keyword list.
+- `BudgetResponder` still cannot report over/under-budget status - the
+  underlying spend-to-date tracking gap predates Phase 7 (Phase 2).
+- The AI conversation history is session-only (not persisted) and does
+  not create `MemoryEvent`s (Phase 6) even though the two features are
+  conceptually related.
+- Same Phase 1/3/5/6 items as before (Android instrumented test,
+  `androidx.security.crypto` deprecation, Desktop key-file hardening,
+  CVD palette validation, OCR/`DocumentPicker` device verification,
+  `Relationship`/`KnowledgeGraph` presentation layer) - all unchanged,
+  see the Phase 6 session block below for detail.
+
+## Next recommended task (as of end of Phase 7 session)
+
+Phase 8 - Security (biometrics, auto-lock, backup encryption, audit
+log) per `ROADMAP.md` - **not started**, awaiting explicit owner
+review/direction per the roadmap's "stop for review before the next
+phase" policy (re-confirmed, not overridden, this session).
+
 ## Completed in Phase 6 session (Financial Memory)
 
 - Implemented Phase 6 per ROADMAP.md: `MemoryEvent`/`MemoryEventRepository`

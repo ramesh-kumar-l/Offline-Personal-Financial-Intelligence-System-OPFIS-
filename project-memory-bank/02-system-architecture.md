@@ -145,3 +145,22 @@ Presentation adds a 4th bottom-nav destination, "Memory"
 (`MemoryScreen` + `MemoryScreenBody` + `MemoryEventRow`); the
 `Relationship`/`KnowledgeGraph` engine has no UI yet, by design (exit
 criteria was "financial memory engine," not a full UI).
+
+## Local AI (Phase 7, see `15-ai-runtime.md`)
+
+Read-only phase - no `:data` or schema changes, same pattern as Phase
+3. `LocalAiPort` (`:domain`) is the local-model abstraction; its only
+binding, `RuleBasedLocalAiEngine`, is a deterministic rule engine, not
+a neural model - no model weights can be downloaded in this offline
+sandboxed environment, and this was an explicit, user-confirmed scope
+decision rather than an oversight. The engine classifies question
+intent (`AiIntentClassifier`), builds a one-shot `FinancialSnapshot`
+from existing repositories, and dispatches to one of six responder
+objects, each reusing an existing Phase 2/3/4 calculator/port
+(`NetWorthCalculator`, `CashFlowCalculator`, `SearchPort`) rather than
+re-deriving logic. `RetrieveFinancialContextUseCase` is the semantic-
+retrieval layer - lexical (FTS5/`bm25()`) rather than vector-embedding
+based, for the same "no downloadable model" reason. Presentation adds a
+5th bottom-nav destination, "Assistant" (`AiAssistantScreen` +
+`AiAssistantScreenBody` + `AiCitationRow`), a question box above a
+session-local (not persisted) conversation history.

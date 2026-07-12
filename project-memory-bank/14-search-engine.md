@@ -51,3 +51,12 @@ overload (`combine(f1, ..., f6) { results: Array<List<SearchResult>> ->
 results.toList().flatten() }`). `Relationship` (also Phase 6) is
 deliberately not search-indexed - it has no free text, only typed
 entity references. See `13-memory-engine.md`.
+
+## Phase 7 - reused as semantic retrieval (implemented)
+
+`RetrieveFinancialContextUseCase` (`domain/.../ai/usecase/`) wraps this
+same `SearchPort` to serve as Phase 7's AI-assistant retrieval layer -
+no new query mechanism was added. It is lexical (`bm25()`-ranked), not
+vector-embedding-based semantic search; no embedding model is available
+fully offline in this environment. Documented as a deliberate scope
+cut in `15-ai-runtime.md`, not an oversight.

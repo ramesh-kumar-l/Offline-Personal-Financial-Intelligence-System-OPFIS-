@@ -51,3 +51,14 @@ type - text, never color alone) above the chronological timeline.
 `MemoryEventRow` renders each entry with a "★" (milestone,
 `OpfisColors.Warning`) or "✎" (note, `OpfisColors.InformationNeutralBlue`)
 glyph paired with its tint, plus a delete action.
+
+## Phase 7 - AI Assistant
+
+`App.kt`'s bottom `NavigationBar` gains a fifth destination,
+"Assistant" (`AppDestination.Assistant`, "🤖"). `AiAssistantScreen`
+(state/wiring) + `AiAssistantScreenBody` (layout) show a question input
+card above a session-local conversation history - each `AiExchange`
+renders the question, the answer text, and its `AiCitation`s via
+`AiCitationRow`, which pairs every entity kind with a fixed
+`OpfisColors` tint and a text prefix (`"ACCOUNT: ..."` etc.) - never
+color alone, matching `SearchResultRow`'s convention.

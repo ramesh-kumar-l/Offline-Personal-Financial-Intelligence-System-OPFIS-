@@ -2,15 +2,20 @@
 
 ## Current phase
 
-Phase 6 - Financial Memory (ROADMAP.md) implemented and tested; Phases
-0-5 remain closed. Phase 7 (Local AI: local model abstraction, AI
-assistant, explainable answers, semantic retrieval) is next - not yet
-started, no owner instruction received to begin it.
+Phase 7 - Local AI (ROADMAP.md) implemented and tested; Phases 0-6
+remain closed. Phase 8 (Security: biometrics, auto-lock, backup
+encryption, audit log) is next - not yet started, no owner instruction
+received to begin it.
 
 ## Active tasks
 
-- Await owner review/direction on Phase 7 (Local AI) before starting -
+- Await owner review/direction on Phase 8 (Security) before starting -
   see `04-roadmap.md`.
+- Consider a real local LLM/embedding model binding for `LocalAiPort`
+  if/when one becomes feasible in this environment (bundled weights,
+  ONNX Runtime/llama.cpp integration) - `RuleBasedLocalAiEngine` is a
+  deliberate, user-confirmed placeholder, not the end state - see
+  `15-ai-runtime.md`.
 - Build a presentation layer for Phase 6's `Relationship`/
   `KnowledgeGraph` engine (domain + data + tests are complete; only the
   UI was deferred - see `13-memory-engine.md`).

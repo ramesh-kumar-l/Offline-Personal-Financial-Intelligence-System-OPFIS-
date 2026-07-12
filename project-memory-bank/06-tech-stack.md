@@ -29,6 +29,9 @@ allTests assemble` all green - see `05-current-state.md`).
 - SQLDelight 2.3.2 + SQLCipher (`net.zetetic:android-database-sqlcipher`
   on Android, `io.github.willena:sqlite-jdbc` on Desktop) for encrypted
   persistence (ADR 0005, Phase 1)
-- SQLite FTS5, embedded vector search, local LLM runtime (ONNX Runtime
-  abstraction), OCR: planned, not yet integrated (Phase 4 / Phase 5 /
-  Phase 7)
+- SQLite FTS5 (Phase 4), OCR (Phase 5): integrated. Embedded vector
+  search and a real local LLM runtime (ONNX Runtime/llama.cpp): still
+  not integrated after Phase 7 - no model weights can be downloaded in
+  this offline environment, so Phase 7 shipped `LocalAiPort` (the
+  abstraction) with a deterministic rule-engine default binding
+  instead. See `15-ai-runtime.md`.
