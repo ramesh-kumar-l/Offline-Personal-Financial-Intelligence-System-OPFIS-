@@ -1,5 +1,7 @@
 package com.opfis.domain.document
 
+import kotlinx.serialization.Serializable
+
 /**
  * An imported PDF or image file (ROADMAP Phase 5, "Document
  * Intelligence"): a receipt, statement, or invoice with OCR/PDF-extracted
@@ -10,6 +12,7 @@ package com.opfis.domain.document
  * linked to one [com.opfis.domain.transaction.Transaction] (the
  * "receipt vault" use case).
  */
+@Serializable
 data class Document(
     val id: String,
     val fileName: String,
@@ -29,6 +32,7 @@ data class Document(
     }
 }
 
+@Serializable
 enum class DocumentType {
     RECEIPT,
     STATEMENT,

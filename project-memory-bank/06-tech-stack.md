@@ -44,3 +44,21 @@ allTests assemble` all green - see `05-current-state.md`).
   file gained owner-only file permissions/ACL hardening in Phase 8, but
   full OS keychain/DPAPI integration (ADR 0005's original Phase 8
   follow-up) is still not implemented.
+- `kotlinx-serialization-json` 1.8.0 + the
+  `org.jetbrains.kotlin.plugin.serialization` compiler plugin (Phase 9,
+  `:domain` only) - first use of kotlinx.serialization in this project,
+  for `FinancialDataSnapshot`'s JSON export/import. Version picked from
+  general knowledge, not confirmed against Maven Central's real
+  metadata (unlike the `androidx.biometric` precedent in Phase 8) - see
+  the Phase 9 caveat below.
+
+**Phase 9 was implemented in an environment with no JDK, no Android
+SDK, and no prior Gradle cache** (confirmed: no `java`/`javac` on
+`PATH`, no JDK under `Program Files`/`.jdks`/registry, no `~/.gradle`).
+Unlike every prior phase, `./gradlew ktlintCheck detekt allTests
+assemble` could **not** be run - Phase 9's code is manually
+self-reviewed (types, imports, detekt parameter-count thresholds,
+expect/actual signatures) but not compiler- or test-verified. Running
+the full build gate on a machine with the real toolchain is the first
+thing the next session (or the user) must do before trusting Phase 9
+as "green" - see `05-current-state.md` and `30-session-handoff.md`.

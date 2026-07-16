@@ -14,6 +14,9 @@ CREATE INDEX relationship_from ON relationship (from_entity_type, from_entity_id
 
 CREATE INDEX relationship_to ON relationship (to_entity_type, to_entity_id);
 
+selectAll:
+SELECT * FROM relationship ORDER BY created_at DESC;
+
 selectInvolving:
 SELECT * FROM relationship
 WHERE (from_entity_type = :entityType AND from_entity_id = :entityId)

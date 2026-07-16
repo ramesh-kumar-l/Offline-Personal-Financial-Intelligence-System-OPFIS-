@@ -71,7 +71,6 @@ class EncryptedPersistenceRecoveryTest {
                 updated_at = 2L,
                 id = "offline_mode",
             )
-            driver.close()
 
             val restoreResult = backupPort.restoreBackup(backupPath)
             assertTrue(restoreResult is BackupResult.Success)
@@ -80,6 +79,28 @@ class EncryptedPersistenceRecoveryTest {
             val row = OpfisDatabase(reopened).systemStatusQueries.selectById("offline_mode").executeAsOne()
             assertEquals("ACTIVE", row.state)
             reopened.close()
+
+            dir.toFile().deleteRecursively()
+        }
+
+    @Test
+    fun `restoreBackup closes the driver so it cannot be used afterward`() =
+        runTest {
+            val dir = createTempDirectory("opfis-restore-closes-driver-test")
+            val factory = DatabaseDriverFactory(dir)
+            val passphrase = "restore-close-test-key".toCharArray()
+
+            val driver = factory.createDriver(passphrase)
+            seedOfflineModeRow(driver)
+            val backupPort = FileBackupPort(driver, factory.databaseFilePath())
+            val backupPath = dir.resolve("opfis-backup.db").toAbsolutePath().toString()
+            assertTrue(backupPort.exportBackup(backupPath) is BackupResult.Success)
+
+            assertTrue(backupPort.restoreBackup(backupPath) is BackupResult.Success)
+
+            assertFailsWith<Exception> {
+                OpfisDatabase(driver).systemStatusQueries.selectAll().executeAsList()
+            }
 
             dir.toFile().deleteRecursively()
         }

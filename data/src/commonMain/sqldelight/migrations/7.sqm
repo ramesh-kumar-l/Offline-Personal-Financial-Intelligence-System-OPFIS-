@@ -1,0 +1,3 @@
+CREATE INDEX financial_transaction_transfer_account_id ON financial_transaction (transfer_account_id);
+
+CREATE INDEX financial_transaction_occurred_at ON financial_transaction (occurred_at DESC);

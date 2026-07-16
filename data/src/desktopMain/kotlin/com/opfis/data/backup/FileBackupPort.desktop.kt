@@ -10,6 +10,12 @@ import java.io.File
  * shared because `:data` has no verified intermediate source set
  * between `androidMain` and `desktopMain`, and this is small enough
  * that inventing one isn't worth the risk (see docs/adr/0005).
+ *
+ * Restore closes [driver] itself before copying - an open file handle
+ * blocks overwriting on Windows, and the caller must treat a successful
+ * restore as requiring an app restart, since every Koin-held
+ * `OpfisDatabase`/repository singleton is permanently bound to this
+ * now-closed driver instance (ROADMAP Phase 9).
  */
 class FileBackupPort(
     private val driver: SqlDriver,
@@ -29,6 +35,7 @@ class FileBackupPort(
         runCatching {
             val source = File(sourcePath)
             require(source.exists()) { "Backup file not found: $sourcePath" }
+            driver.close()
             source.copyTo(File(databaseFilePath), overwrite = true)
         }.fold(
             onSuccess = { BackupResult.Success },

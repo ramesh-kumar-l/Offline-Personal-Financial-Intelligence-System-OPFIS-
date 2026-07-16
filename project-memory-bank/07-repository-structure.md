@@ -111,3 +111,21 @@ hardened with owner-only file permissions/ACL (no schema change).
 `App.kt`, which now also wraps its content in a lock gate.
 `composeApp/androidMain/.../MainActivity.kt` changed from
 `ComponentActivity` to `FragmentActivity` to host `BiometricPrompt`.
+
+Phase 9 adds: `domain/.../importexport/` (`FinancialDataSnapshot`,
+`TransactionTagAssignment`, `ImportExportCoreRepositories`/
+`ImportExportRelatedRepositories`, `TransactionCsvCodec`,
+`importexport/usecase/` [`ExportFinancialDataUseCase`,
+`ImportFinancialDataUseCase` (+ `ImportSummary`),
+`ExportTransactionsCsvUseCase`, `ImportTransactionsCsvUseCase`]) and
+`domain/.../backup/usecase/` (`ExportBackupUseCase`,
+`RestoreBackupUseCase`, wrapping Phase 1's `BackupPort`); `data/.../db/`
+`Relationship.sq` gained a `selectAll` query backing
+`RelationshipRepository.observeAll()`; `data/.../backup/FileBackupPort`
+(both platform actuals) `restoreBackup` now closes its own driver - no
+schema/migration change. `composeApp/.../io/` (`FileSaver`, `TempFile`,
+`AppExit` - each `expect`/`actual` in `commonMain`/`desktopMain`/
+`androidMain`, mirroring `DocumentPicker`'s shape) and
+`composeApp/.../importexport/` (`ImportExportScreen` +
+`ImportExportScreenBody`) - a seventh `NavigationBar` destination
+("Data") in `App.kt`.

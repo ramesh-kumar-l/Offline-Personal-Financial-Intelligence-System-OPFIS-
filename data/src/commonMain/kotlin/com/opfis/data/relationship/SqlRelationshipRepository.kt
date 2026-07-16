@@ -13,6 +13,13 @@ import kotlinx.coroutines.flow.map
 class SqlRelationshipRepository(
     private val database: OpfisDatabase,
 ) : RelationshipRepository {
+    override fun observeAll(): Flow<List<Relationship>> =
+        database.relationshipQueries
+            .selectAll()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { rows -> rows.map(::toDomainRelationship) }
+
     override fun observeInvolving(
         entityType: EntityType,
         entityId: String,

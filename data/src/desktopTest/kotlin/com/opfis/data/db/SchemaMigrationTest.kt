@@ -69,6 +69,22 @@ class SchemaMigrationTest {
                 .executeAsList()
         assertEquals(1, memoryEvents.size)
 
+        // Also proves migration 7.sqm (Phase 10 selectRecent index) applied cleanly.
+        database.financialTransactionQueries.insertOrReplace(
+            id = "tx-1",
+            account_id = "acc-1",
+            category_id = null,
+            type = "EXPENSE",
+            amount_minor_units = 500L,
+            transfer_account_id = null,
+            description = "",
+            occurred_at = 1000L,
+            created_at = 1000L,
+            updated_at = 1000L,
+            version = 1L,
+        )
+        assertEquals(1, database.financialTransactionQueries.selectRecent(10L).executeAsList().size)
+
         driver.close()
         Files.deleteIfExists(dbFile)
     }

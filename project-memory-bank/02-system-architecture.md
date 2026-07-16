@@ -183,3 +183,78 @@ Desktop's manual "Confirm to unlock" fallback) is written to the audit
 log via `RecordAuditEventUseCase`. Presentation adds a 6th bottom-nav
 destination, "Security" (`SecurityScreen` + `SecurityScreenBody` +
 `AuditLogRow`).
+
+## Import/Export (Phase 9, see `17-backup-engine.md`)
+
+Builds on Phase 1's `BackupPort` (deliberately left unwrapped by Phase
+8): new thin `ExportBackupUseCase`/`RestoreBackupUseCase` wrappers add
+the Application-layer boundary Presentation always talks through.
+`FileBackupPort.restoreBackup` (both platform actuals) now closes its
+own `SqlDriver` before copying - required on Windows (an open file
+handle blocks overwriting) and everywhere else (a live connection must
+never keep pointing at a swapped-out file) - so a successful restore
+requires the whole app process to restart; there is no in-process
+Koin-graph reload. A new `:domain` package, `importexport/`, adds a
+full-dataset JSON export/import (`FinancialDataSnapshot` - the real
+`@Serializable`-annotated domain entities, not a parallel DTO
+hierarchy) and a transactions-only CSV codec
+(`TransactionCsvCodec`, hand-rolled, no new CSV library). Two small
+repository-bundle data classes (`ImportExportCoreRepositories`,
+`ImportExportRelatedRepositories`) keep the export/import use cases'
+constructors under detekt's `LongParameterList` threshold, the same
+technique as Phase 7's `FinancialRepositories`. `RelationshipRepository`
+gained `observeAll()` (it previously only supported `observeInvolving`)
+since full-dataset export has no other way to enumerate every
+relationship. First use of `kotlinx.serialization` in this project
+(`:domain` only - `kotlinx-serialization-json` + the
+`org.jetbrains.kotlin.plugin.serialization` compiler plugin).
+
+Presentation adds a 7th bottom-nav destination, "Data"
+(`ImportExportScreen` + `ImportExportScreenBody`), and three new
+`composeApp/.../io/` platform abstractions mirroring `DocumentPicker`'s
+`expect`/`actual` shape: `FileSaver` (native "save file" dialog -
+`FileDialog.SAVE` on Desktop, `ActivityResultContracts.CreateDocument`
+on Android), `TempFile` (a staging file path + byte read/write, since
+Android's SAF `content://` Uris aren't real filesystem paths but
+`VACUUM INTO`/backup restore need one - both export and restore always
+stage through a temp file on both platforms, trading a small Desktop
+inefficiency for one identical code path), and `AppExit` (process
+termination after a successful restore, since the closed driver makes
+continuing to use the app unsafe - Desktop calls `exitProcess(0)`,
+Android casts to `FragmentActivity` for `finishAffinity()` +
+`Process.killProcess`, same activity-casting precedent as Phase 8's
+`BiometricAuth.android.kt`). `AuditEventType` gained `DATA_EXPORTED`/
+`DATA_IMPORTED` alongside the existing (Phase 8, previously unused)
+`BACKUP_EXPORTED`/`BACKUP_RESTORED`.
+
+**Not verified by a build gate this session** - see `05-current-state.md`.
+
+## Performance (Phase 10, see `20-performance-budget.md`)
+
+Four targeted, narrowly-justified changes, each backed by a real,
+existing hot path rather than a speculative micro-optimization:
+`TransactionRepository` gained `observeRecent(limit)` (a bounded,
+indexed `SELECT ... ORDER BY occurred_at DESC LIMIT :limit` query)
+replacing `ObserveRecentTransactionsUseCase`'s previous `observeAll()`
++ in-memory sort/take - the Dashboard's "Recent Activity" widget no
+longer loads and sorts the entire transaction table on every emission.
+Schema v8 (`migrations/7.sqm`) adds two indexes: `occurred_at` (serves
+`selectRecent`/`selectAll`/`selectByAccount`'s existing `ORDER BY`) and
+`transfer_account_id` (serves `selectByAccount`'s existing `OR`
+clause, previously unindexed on that side). Both platforms' composition
+roots (`Main.kt`/`OpfisApplication.kt`) now kick off a background
+`Dispatchers.IO` coroutine right after `startKoin` to pre-warm the
+`OpfisDatabase` singleton (encrypted driver open + schema
+create/migrate) while the user is still looking at the lock screen,
+instead of blocking the first screen's composition on cold DB open -
+purely an ordering change, not a new code path (whichever caller
+resolves the Koin singleton first wins; Koin's singleton factory is
+already thread-safe). `App.kt`'s auto-lock idle-check poll dropped from
+1s to 15s (`AUTO_LOCK_CHECK_INTERVAL_MILLIS`) - still well under the
+5-minute `AutoLockPolicy` timeout, but roughly 15x fewer wakeups.
+
+**Not build-verified this session** (same missing-JDK/Android-SDK
+constraint as Phase 9) and **no profiler/benchmark was run** - the
+20-performance-budget.md targets (cold start &lt;1s, search &lt;100ms,
+dashboard &lt;300ms) are structurally targeted, not empirically
+confirmed - see `05-current-state.md`.

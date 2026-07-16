@@ -17,4 +17,6 @@ enum class AuditEventType {
     APP_UNLOCK_FAILED,
     BACKUP_EXPORTED,
     BACKUP_RESTORED,
+    DATA_EXPORTED,
+    DATA_IMPORTED,
 }

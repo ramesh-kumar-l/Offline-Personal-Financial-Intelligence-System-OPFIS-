@@ -1,10 +1,13 @@
 package com.opfis.domain.transaction
 
+import kotlinx.serialization.Serializable
+
 /**
  * A single posted financial event against [accountId]. [amountMinorUnits]
  * is always positive; the sign of its effect on account balances is
  * derived from [type] by [TransactionLedgerRules], never stored.
  */
+@Serializable
 data class Transaction(
     val id: String,
     val accountId: String,
@@ -28,6 +31,7 @@ data class Transaction(
     }
 }
 
+@Serializable
 enum class TransactionType {
     INCOME,
     EXPENSE,

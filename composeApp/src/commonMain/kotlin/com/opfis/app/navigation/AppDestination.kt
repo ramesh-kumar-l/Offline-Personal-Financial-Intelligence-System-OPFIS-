@@ -11,4 +11,5 @@ enum class AppDestination(
     Memory("Memory", "🕒"),
     Assistant("Assistant", "🤖"),
     Security("Security", "🔒"),
+    Data("Data", "⇅"),
 }

@@ -1,6 +1,224 @@
 # Session Handoff
 
-Last session: 2026-07-12
+Last session: 2026-07-16
+
+## Completed in Phase 10 session (Performance)
+
+- Implemented Phase 10 per ROADMAP.md (query/startup/battery
+  optimization), same session as Phase 9, continuing past that phase's
+  review checkpoint per the owner's explicit "continue with next Phase"
+  instruction. Four targeted changes, each backed by a real, existing
+  hot path found by reading the actual schema/DI/composition-root code
+  rather than invented speculatively - full rationale in
+  `20-performance-budget.md`:
+  1. `TransactionRepository.observeRecent(limit)` (new interface
+     method) replaces `ObserveRecentTransactionsUseCase`'s previous
+     `observeAll()` + in-memory `sortedByDescending().take()` - the
+     Dashboard's "Recent Activity" widget no longer loads the entire
+     transaction table into a Kotlin `List` on every emission just to
+     keep the newest 10. Backed by a new indexed SQL query
+     (`selectRecent`, schema v8 via `migrations/7.sqm`).
+  2. Schema v8 also adds a `transfer_account_id` index -
+     `selectByAccount`'s existing `WHERE account_id = ? OR
+     transfer_account_id = ?` only had an index on the first side.
+  3. `Main.kt`/`OpfisApplication.kt` pre-warm the `OpfisDatabase` Koin
+     singleton on a background `Dispatchers.IO` coroutine right after
+     `startKoin`, so cold DB open (SQLCipher key derivation + schema
+     migration) doesn't block the first screen's composition on the
+     main/UI thread - it now overlaps with the lock-screen unlock
+     interaction instead.
+  4. `App.kt`'s auto-lock idle-check poll interval: 1s -> 15s (still
+     far below the 5-minute timeout).
+- Deliberately did **not** enable SQLite `WAL`/`synchronous=NORMAL`
+  pragmas, despite being a well-known SQLite performance win - Phase
+  9's `restoreBackup` copies the main `.db` file over the live one but
+  doesn't checkpoint/delete `-wal`/`-shm` sidecar files, so enabling WAL
+  now would introduce an untested restore-corruption risk this session
+  cannot verify. Also skipped adding indexes to `budget.category_id`/
+  `category.parent_id` - no existing query filters on either column, so
+  an index there would be speculative dead weight, not a real
+  optimization (CLAUDE.md "no speculative code").
+- Updated all 5 places implementing `TransactionRepository` for the new
+  interface method: the real `SqlTransactionRepository` plus 4 test
+  fakes (`ObserveRecentTransactionsUseCaseTest`,
+  `ObserveTimelineUseCaseTest`, `RuleBasedLocalAiEngineTest`,
+  `ImportExportFakes`). New `SqlTransactionRepositoryTest`
+  (`observeRecent` ordering/limit) and an extended `SchemaMigrationTest`
+  assertion proving `migrations/7.sqm` applies cleanly on top of the
+  existing v1-to-current chain.
+- **Same missing-JDK/Android-SDK constraint as Phase 9** - the build
+  gate could not be run, so every file was manually read back and
+  checked by hand instead. One real bug was caught and fixed this way:
+  a test called the generated `selectRecent(10)` query with a bare
+  `Int` literal, but SQLDelight generates a `Long` parameter for
+  untyped `LIMIT` bind values and Kotlin does not auto-widen `Int` to
+  `Long` - would have been a compile error (fixed to `10L`).
+  `SqlTransactionRepository.observeRecent`'s own `limit.toLong()` call
+  was already correct, so this was caught only in the test file, not
+  production code.
+- Incidental fix while touching schema-version history in
+  `11-database-schema.md`: filled in a pre-existing gap where the
+  Phase 8 `audit_log` migration (v7) was missing from the "Schema
+  versions" list entirely (only relevant since this phase was already
+  adding its own v8 entry to the same list).
+- Updated memory bank: `02-system-architecture.md`,
+  `04-roadmap.md`, `05-current-state.md`, `11-database-schema.md`,
+  `20-performance-budget.md` (expanded from a 2-line stub),
+  `26-active-initiatives.md`, this file.
+
+## Not completed (as of end of Phase 10 session)
+
+- **The build gate has never been run against Phase 9 or Phase 10** -
+  same unverified status as before, now covering two phases' worth of
+  changes.
+- **No profiler or benchmark tool exists in this environment** -
+  `20-performance-budget.md`'s three named targets (cold start <1s,
+  search <100ms, dashboard <300ms) were never measured, only targeted
+  structurally. This is a materially bigger gap for Phase 10 than the
+  missing build gate was for Phase 9, since "performance budgets
+  achieved" is this phase's literal ROADMAP exit criterion and cannot
+  be claimed met without a real measurement.
+- SQLite WAL/synchronous pragmas were considered and deferred, not
+  implemented - see above and `20-performance-budget.md`.
+- No pagination was added for the audit log (unbounded `selectAll`,
+  known gap since Phase 8) or the JSON export/import snapshot (loads
+  every entity into one in-memory string, known gap since Phase 9) -
+  both out of scope for this pass.
+
+## Next recommended task (as of end of Phase 10 session)
+
+1. **Run `./gradlew ktlintCheck detekt allTests assemble` on a machine
+   with a real JDK + Android SDK** and fix whatever it surfaces - now
+   covers two unverified phases (9 and 10), not optional cleanup.
+2. **Measure actual performance** once the build is green: cold start,
+   search latency, dashboard render time, compared against
+   `20-performance-budget.md`'s targets. Without this, Phase 10's exit
+   criterion ("performance budgets achieved") is unconfirmed.
+3. Owner review of both phases and explicit direction on Phase 11
+   (Testing) - the standing ROADMAP.md policy is to stop for review
+   between phases; this session's owner instruction authorized
+   continuing through Phase 10 only.
+4. When an Android emulator/device is available, add the instrumented
+   test flagged since Phase 1 and verify Phase 5's OCR/picker paths.
+5. When `node`/npm becomes available, run `validate_palette.js` against
+   the dashboard's chart colors.
+
+## Completed in Phase 9 session (Import/Export)
+
+- Implemented Phase 9 per ROADMAP.md: CSV (transactions only), JSON
+  (every entity), and encrypted-backup export/restore, continuing past
+  the Phase 8 review checkpoint per the owner's explicit instruction in
+  the message that opened this session ("continue the implementation").
+  New `domain/.../importexport/` package (`FinancialDataSnapshot`,
+  `TransactionTagAssignment`, `ImportExportCoreRepositories`/
+  `ImportExportRelatedRepositories`, `TransactionCsvCodec`,
+  `importexport/usecase/` [`ExportFinancialDataUseCase`,
+  `ImportFinancialDataUseCase` + `ImportSummary`,
+  `ExportTransactionsCsvUseCase`, `ImportTransactionsCsvUseCase`]) and
+  `domain/.../backup/usecase/` (`ExportBackupUseCase`,
+  `RestoreBackupUseCase` wrapping Phase 1's `BackupPort`). Every domain
+  entity/enum touched by the JSON snapshot gained a bare `@Serializable`
+  (kotlinx.serialization, first use in this project) rather than a
+  parallel DTO hierarchy. `RelationshipRepository` gained `observeAll()`
+  (previously only `observeInvolving`) - the one port with no existing
+  "read everything" primitive, needed for full-dataset export.
+  `FileBackupPort.restoreBackup` (both platform actuals) now closes its
+  own driver before copying, since a successful restore requires the
+  whole app process to exit and restart (no in-process Koin-graph
+  reload) - `composeApp/.../io/AppExit` (new) does the actual
+  termination, `composeApp/.../io/FileSaver` and `.../io/TempFile` (new)
+  back the save-dialog and Android-SAF-Uri-isn't-a-path staging steps.
+  New 7th bottom-nav destination, "Data" (`ImportExportScreen` +
+  `ImportExportScreenBody`). Full detail in `05-current-state.md` and
+  `17-backup-engine.md` (fleshed out from a 2-line stub).
+- Scope decisions made explicit, two confirmed via `AskUserQuestion`
+  before coding began: (1) this pass covers Phase 9 only, then stops
+  for review before Phase 10 (Performance) - not a push through Phases
+  9-12 in one continuous session; (2) CSV is scoped to transactions
+  only (the one entity with a natural tabular shape), JSON covers every
+  entity for full portability - both per explicit owner confirmation,
+  see `17-backup-engine.md`. Also decided without a question (directly
+  justified by the task at hand, matching CLAUDE.md's "no speculative
+  code" guidance): audit-entry id/timestamp generation for the new
+  `DATA_EXPORTED`/`DATA_IMPORTED` events lives in `ImportExportScreen.kt`
+  (presentation layer), mirroring Phase 8's `LockScreen.kt` precedent
+  exactly, rather than inside the new domain use cases - domain use
+  cases elsewhere in this codebase always receive fully-formed entities
+  from the call site (e.g. `UpsertAccountUseCase` never computes
+  `createdAt` itself), so this keeps the new use cases consistent with
+  that convention instead of introducing a new pattern.
+- **This session's environment has no JDK, no Android SDK, and no
+  prior Gradle cache** - confirmed by direct search (no `java`/`javac`
+  on `PATH`, no JDK under `Program Files`/`.jdks`/the registry, no
+  `~/.gradle` directory), a materially different toolchain than every
+  prior phase documented in this file (which ran against "JDK 25.0.3,
+  Android SDK 36..."). `./gradlew ktlintCheck detekt allTests assemble`
+  could not be run. Surfaced this to the owner via `AskUserQuestion`
+  before proceeding; owner chose "manual review only, build later."
+  Every new/changed file was then read back in full and checked by hand
+  for: import correctness, `expect`/`actual` signature matching, detekt
+  `LongParameterList`/constructor-threshold risk (kept every new
+  bundling data class/composable at <=7 fields after the DocumentVault/
+  SearchScreen precedent from Phase 5 showed the threshold fires *at*
+  the limit, not only above it), and Kotlin syntax. One real bug was
+  caught this way: `ImportFinancialDataUseCase.kt` called
+  `Json.decodeFromString<FinancialDataSnapshot>(json)` without
+  importing the reified extension function
+  `kotlinx.serialization.decodeFromString` (present in the sibling
+  `ExportFinancialDataUseCase.kt`'s `encodeToString` import but missed
+  on the decode side) - fixed by adding the import. **This is not a
+  substitute for a real compile** - the next session (or the owner)
+  must run the actual build gate before trusting this phase as green;
+  the highest-risk unknown is whether the freshly-added
+  `kotlinx-serialization-json` version (1.8.0, chosen from general
+  knowledge, not confirmed against real Maven Central metadata unlike
+  Phase 8's `androidx.biometric` precedent) actually resolves.
+- Every new file is under 300 lines (largest: `ImportExportFakes.kt`
+  at ~230 lines - split out of what was originally one 318-line test
+  file once the strict 300-line modularity rule flagged it, moving all
+  13 fake repository classes to their own file so the test file itself
+  stayed focused and short).
+- Updated memory bank: `02-system-architecture.md`, `03-domain-model.md`,
+  `04-roadmap.md`, `05-current-state.md`, `06-tech-stack.md`,
+  `07-repository-structure.md`, `17-backup-engine.md` (fleshed out from
+  a 2-line stub), `26-active-initiatives.md`, this file.
+
+## Not completed (as of end of Phase 9 session)
+
+- **The build gate has never been run against this phase's code** - see
+  above. Treat every claim of correctness in this session as
+  "manually reviewed," not "compiler/test verified," until that
+  changes.
+- No progress indicator for large exports/imports; no dry-run/preview
+  before a JSON/CSV import applies (only encrypted-backup restore has a
+  confirmation dialog, since it alone is destructive).
+- CSV import/export remains transactions-only by design (see
+  `17-backup-engine.md`) - no other entity gained CSV support.
+- Restoring an encrypted backup still requires a full app-process
+  restart - no in-process Koin/DI-graph reload was attempted (judged
+  too large/risky for one session).
+- Same Phase 1/3/5/6/7/8 items as before (Android instrumented test,
+  `androidx.security.crypto` deprecation, CVD palette validation,
+  OCR/`DocumentPicker` device verification, `Relationship`/
+  `KnowledgeGraph` presentation layer, no real local LLM binding, full
+  OS keychain/DPAPI integration for Desktop's key) - all unchanged, see
+  the Phase 8 session block below for detail.
+
+## Next recommended task (as of end of Phase 9 session)
+
+1. **Run `./gradlew ktlintCheck detekt allTests assemble` on a machine
+   with a real JDK + Android SDK** and fix whatever it surfaces - this
+   is the mandatory first step, not optional cleanup, since Phase 9 has
+   never been compiled.
+2. Owner review of Phase 9 (import/export scope, the CSV-transactions-
+   only cut, the mandatory-app-restart restore UX) and explicit
+   direction on Phase 10 (Performance) - the standing ROADMAP.md policy
+   is to stop for review between phases; this session's owner
+   instruction authorized continuing only through Phase 9.
+3. When an Android emulator/device is available, add the instrumented
+   test flagged since Phase 1 and verify Phase 5's OCR/picker paths.
+4. When `node`/npm becomes available, run `validate_palette.js` against
+   the dashboard's chart colors.
 
 ## Completed in Phase 8 session (Security)
 

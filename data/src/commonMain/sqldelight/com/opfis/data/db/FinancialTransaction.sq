@@ -14,6 +14,10 @@ CREATE TABLE financial_transaction (
 
 CREATE INDEX financial_transaction_account_id ON financial_transaction (account_id);
 
+CREATE INDEX financial_transaction_transfer_account_id ON financial_transaction (transfer_account_id);
+
+CREATE INDEX financial_transaction_occurred_at ON financial_transaction (occurred_at DESC);
+
 selectAll:
 SELECT * FROM financial_transaction ORDER BY occurred_at DESC;
 
@@ -24,6 +28,9 @@ selectByAccount:
 SELECT * FROM financial_transaction
 WHERE account_id = ? OR transfer_account_id = ?
 ORDER BY occurred_at DESC;
+
+selectRecent:
+SELECT * FROM financial_transaction ORDER BY occurred_at DESC LIMIT :limit;
 
 insertOrReplace:
 INSERT OR REPLACE INTO financial_transaction

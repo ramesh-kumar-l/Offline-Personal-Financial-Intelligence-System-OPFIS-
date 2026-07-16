@@ -1,5 +1,7 @@
 package com.opfis.domain.entity
 
+import kotlinx.serialization.Serializable
+
 /**
  * Every addressable domain entity kind (ROADMAP Phase 6, "Knowledge
  * graph abstractions") - used to reference an entity generically from
@@ -10,6 +12,7 @@ package com.opfis.domain.entity
  * FTS5-indexed kinds - this enum also covers entities with no search
  * presence (Asset, Liability, Budget, Goal).
  */
+@Serializable
 enum class EntityType {
     ACCOUNT,
     ASSET,

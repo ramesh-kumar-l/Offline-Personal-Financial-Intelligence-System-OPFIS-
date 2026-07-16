@@ -16,6 +16,9 @@ private class FakeTransactionRepository(
     override fun observeAll(): Flow<List<Transaction>> = flowOf(transactions)
 
     override fun observeByAccount(accountId: String): Flow<List<Transaction>> = flowOf(transactions)
+
+    override fun observeRecent(limit: Int): Flow<List<Transaction>> =
+        flowOf(transactions.sortedByDescending { it.occurredAt }.take(limit))
 }
 
 class ObserveRecentTransactionsUseCaseTest {

@@ -161,3 +161,38 @@ per-intent responder objects that compose `AiAnswer`s.
 - No new persisted financial-domain entities this phase - Phase 8 is a
   cross-cutting security layer over the existing data, not new
   financial data itself.
+
+## Phase 9 additions
+
+- **AuditEventType** (`audit/`) gained `DATA_EXPORTED`, `DATA_IMPORTED`
+  (JSON/CSV flows) alongside the existing `BACKUP_*` pair (encrypted
+  whole-DB flow, unused until this phase).
+- **FinancialDataSnapshot** (`importexport/`, derived, not persisted) -
+  a full-dataset export/import unit bundling every entity list
+  (accounts, assets, liabilities, categories, transactions, budgets,
+  goals, tags, `transactionTagAssignments: List<TransactionTagAssignment>`,
+  documents, memoryEvents, relationships) plus `schemaVersion`/
+  `exportedAtEpochMillis`. Every domain entity + enum involved gained a
+  bare `@Serializable` annotation (kotlinx.serialization, first use in
+  this project) rather than a parallel DTO hierarchy. `AuditLogEntry`
+  is deliberately excluded - audit history isn't "financial data" to
+  round-trip. `TransactionTagAssignment(transactionId, tagId)` stands
+  in for the join table, which has no domain entity of its own.
+- **ImportExportCoreRepositories** / **ImportExportRelatedRepositories**
+  (`importexport/`) - two repository-bundle data classes (7 + 6 fields)
+  so `ExportFinancialDataUseCase`/`ImportFinancialDataUseCase` stay
+  under detekt's `LongParameterList` threshold, the same technique as
+  Phase 7's `FinancialRepositories`.
+- **ImportSummary** (`importexport/usecase/`) - `countsByEntity: Map<String, Int>`,
+  the per-entity-type row counts an import replayed, for UI feedback. A
+  map rather than one field per entity, again to stay under the
+  parameter-count threshold.
+- `RelationshipRepository` gained `observeAll()` (previously only
+  `observeInvolving(entityType, entityId)`) - a direct, narrowly
+  justified port extension since full-dataset export has no other way
+  to enumerate every relationship.
+- CSV (`TransactionCsvCodec`, `importexport/`) is scoped to
+  `Transaction` only - the one entity with a natural tabular shape.
+  Columns mirror `Transaction`'s own fields 1:1 (id-based, not
+  human-readable account/category names) so import never needs an
+  ambiguous name -> id lookup.

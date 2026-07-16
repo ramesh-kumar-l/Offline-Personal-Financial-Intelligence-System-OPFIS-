@@ -1,6 +1,7 @@
 package com.opfis.domain.relationship
 
 import com.opfis.domain.entity.EntityRef
+import kotlinx.serialization.Serializable
 
 /**
  * A user-declared, typed link between two entities (ROADMAP Phase 6,
@@ -12,6 +13,7 @@ import com.opfis.domain.entity.EntityRef
  * table only stores links a user explicitly draws that the schema has
  * no dedicated column for.
  */
+@Serializable
 data class Relationship(
     val id: String,
     val from: EntityRef,
@@ -25,6 +27,7 @@ data class Relationship(
     }
 }
 
+@Serializable
 enum class RelationshipType {
     RELATED,
     SUPPORTING_DOCUMENT,

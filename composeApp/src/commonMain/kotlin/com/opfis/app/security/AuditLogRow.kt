@@ -17,6 +17,8 @@ internal fun AuditLogRow(entry: AuditLogEntry) {
             AuditEventType.APP_UNLOCK_FAILED -> "⚠" to OpfisColors.Error
             AuditEventType.BACKUP_EXPORTED -> "⇧" to OpfisColors.InformationNeutralBlue
             AuditEventType.BACKUP_RESTORED -> "⇩" to OpfisColors.InformationNeutralBlue
+            AuditEventType.DATA_EXPORTED -> "📤" to OpfisColors.InformationNeutralBlue
+            AuditEventType.DATA_IMPORTED -> "📥" to OpfisColors.InformationNeutralBlue
         }
     Column {
         Text("$glyph ${entry.eventType.name}", style = MaterialTheme.typography.bodyLarge, color = tint)

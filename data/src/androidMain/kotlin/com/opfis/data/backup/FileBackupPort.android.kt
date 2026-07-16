@@ -7,9 +7,12 @@ import java.io.File
 
 /**
  * Uses `VACUUM INTO` for a consistent export while the database is
- * open, and a plain file copy for restore (caller must close the live
- * [SqlDriver] first - see docs/adr/0005 and the recovery tests in
- * `:data`'s desktopTest, which exercise this same mechanism).
+ * open. Restore closes [driver] itself before copying (an open file
+ * handle blocks overwriting on Windows, and leaves a live connection
+ * pointed at a swapped-out file everywhere else) - the caller must
+ * treat a successful restore as requiring an app restart, since every
+ * Koin-held `OpfisDatabase`/repository singleton is permanently bound
+ * to this now-closed driver instance (ROADMAP Phase 9).
  */
 class FileBackupPort(
     private val driver: SqlDriver,
@@ -29,6 +32,7 @@ class FileBackupPort(
         runCatching {
             val source = File(sourcePath)
             require(source.exists()) { "Backup file not found: $sourcePath" }
+            driver.close()
             source.copyTo(File(databaseFilePath), overwrite = true)
         }.fold(
             onSuccess = { BackupResult.Success },

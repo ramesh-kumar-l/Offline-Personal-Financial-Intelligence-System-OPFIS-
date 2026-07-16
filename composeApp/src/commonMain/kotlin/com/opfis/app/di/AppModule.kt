@@ -14,6 +14,8 @@ import com.opfis.domain.asset.usecase.ObserveAssetsUseCase
 import com.opfis.domain.asset.usecase.UpsertAssetUseCase
 import com.opfis.domain.audit.usecase.ObserveAuditLogUseCase
 import com.opfis.domain.audit.usecase.RecordAuditEventUseCase
+import com.opfis.domain.backup.usecase.ExportBackupUseCase
+import com.opfis.domain.backup.usecase.RestoreBackupUseCase
 import com.opfis.domain.budget.usecase.DeleteBudgetUseCase
 import com.opfis.domain.budget.usecase.ObserveBudgetsUseCase
 import com.opfis.domain.budget.usecase.UpsertBudgetUseCase
@@ -29,6 +31,12 @@ import com.opfis.domain.document.usecase.ObserveDocumentsUseCase
 import com.opfis.domain.goal.usecase.DeleteGoalUseCase
 import com.opfis.domain.goal.usecase.ObserveGoalsUseCase
 import com.opfis.domain.goal.usecase.UpsertGoalUseCase
+import com.opfis.domain.importexport.ImportExportCoreRepositories
+import com.opfis.domain.importexport.ImportExportRelatedRepositories
+import com.opfis.domain.importexport.usecase.ExportFinancialDataUseCase
+import com.opfis.domain.importexport.usecase.ExportTransactionsCsvUseCase
+import com.opfis.domain.importexport.usecase.ImportFinancialDataUseCase
+import com.opfis.domain.importexport.usecase.ImportTransactionsCsvUseCase
 import com.opfis.domain.liability.usecase.DeleteLiabilityUseCase
 import com.opfis.domain.liability.usecase.ObserveLiabilitiesUseCase
 import com.opfis.domain.liability.usecase.UpsertLiabilityUseCase
@@ -145,4 +153,31 @@ val appModule =
         factory { AskAiAssistantUseCase(localAi = get()) }
         factory { RecordAuditEventUseCase(repository = get()) }
         factory { ObserveAuditLogUseCase(repository = get()) }
+        factory { ExportBackupUseCase(backupPort = get()) }
+        factory { RestoreBackupUseCase(backupPort = get()) }
+        factory {
+            ImportExportCoreRepositories(
+                accounts = get(),
+                assets = get(),
+                liabilities = get(),
+                categories = get(),
+                budgets = get(),
+                goals = get(),
+                tags = get(),
+            )
+        }
+        factory {
+            ImportExportRelatedRepositories(
+                transactions = get(),
+                transactionTags = get(),
+                documents = get(),
+                memoryEvents = get(),
+                relationships = get(),
+                ledger = get(),
+            )
+        }
+        factory { ExportFinancialDataUseCase(core = get(), related = get()) }
+        factory { ImportFinancialDataUseCase(core = get(), related = get()) }
+        factory { ExportTransactionsCsvUseCase(transactionRepository = get()) }
+        factory { ImportTransactionsCsvUseCase(ledger = get()) }
     }

@@ -32,6 +32,34 @@ class SqlRelationshipRepositoryTest {
         }
 
     @Test
+    fun `observeAll returns every relationship`() =
+        runTest {
+            val repository = SqlRelationshipRepository(testDatabase())
+            val first =
+                Relationship(
+                    id = "rel-1",
+                    from = EntityRef(EntityType.DOCUMENT, "doc-1"),
+                    to = EntityRef(EntityType.LIABILITY, "liab-1"),
+                    relationshipType = RelationshipType.SUPPORTING_DOCUMENT,
+                    createdAt = 1000L,
+                    updatedAt = 1000L,
+                )
+            val second =
+                Relationship(
+                    id = "rel-2",
+                    from = EntityRef(EntityType.GOAL, "goal-1"),
+                    to = EntityRef(EntityType.ACCOUNT, "acc-1"),
+                    relationshipType = RelationshipType.CONTRIBUTES_TO,
+                    createdAt = 2000L,
+                    updatedAt = 2000L,
+                )
+            repository.upsert(first)
+            repository.upsert(second)
+
+            assertEquals(setOf(first, second), repository.observeAll().first().toSet())
+        }
+
+    @Test
     fun `observeInvolving finds a relationship from either endpoint`() =
         runTest {
             val repository = SqlRelationshipRepository(testDatabase())

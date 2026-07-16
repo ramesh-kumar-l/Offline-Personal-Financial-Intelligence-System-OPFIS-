@@ -1,6 +1,7 @@
 package com.opfis.domain.memory
 
 import com.opfis.domain.entity.EntityRef
+import kotlinx.serialization.Serializable
 
 /**
  * A single entry in the app's persistent financial memory timeline
@@ -11,6 +12,7 @@ import com.opfis.domain.entity.EntityRef
  * other use cases (e.g. "budget exceeded") is deliberately out of
  * scope for this phase - see `13-memory-engine.md`.
  */
+@Serializable
 data class MemoryEvent(
     val id: String,
     val eventType: MemoryEventType,
@@ -26,6 +28,7 @@ data class MemoryEvent(
     }
 }
 
+@Serializable
 enum class MemoryEventType {
     NOTE,
     MILESTONE,

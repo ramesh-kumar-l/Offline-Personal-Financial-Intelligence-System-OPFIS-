@@ -64,6 +64,8 @@ private class FakeTransactionRepository(
     override fun observeAll(): Flow<List<Transaction>> = flowOf(transactions)
 
     override fun observeByAccount(accountId: String) = flowOf(transactions.filter { it.accountId == accountId })
+
+    override fun observeRecent(limit: Int): Flow<List<Transaction>> = error("not used in this test")
 }
 
 private class FakeCategoryRepository(

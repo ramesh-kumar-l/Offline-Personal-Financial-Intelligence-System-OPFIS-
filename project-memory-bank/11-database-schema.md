@@ -21,6 +21,12 @@ key.
 - **v5** (`migrations/4.sqm`): adds `document` (Phase 5).
 - **v6** (`migrations/5.sqm`): adds `memory_event` and `relationship`
   (Phase 6).
+- **v7** (`migrations/6.sqm`): adds `audit_log` (Phase 8) - missing from
+  this list until now, a documentation gap predating Phase 10, filled
+  in while adding the v8 entry below.
+- **v8** (`migrations/7.sqm`): adds two indexes to `financial_transaction`
+  - `occurred_at` and `transfer_account_id` (Phase 10 query
+  optimization, see `20-performance-budget.md`). No new tables.
 
 ## Phase 2 tables
 
@@ -32,7 +38,7 @@ key.
 | `category` | `parent_id` | self-referential, one or more levels of nesting |
 | `budget` | `category_id`, `limit_minor_units`, `period` | definition only, no spend tracking |
 | `goal` | `target_amount_minor_units`, `current_amount_minor_units` | progress is user-editable |
-| `financial_transaction` | `account_id`, `transfer_account_id`, `amount_minor_units`, `type` | indexed on `account_id`; named `financial_transaction` (not `transaction`) to avoid colliding with SQLDelight's generated `Transaction` class and its own `transaction {}` API |
+| `financial_transaction` | `account_id`, `transfer_account_id`, `amount_minor_units`, `type` | indexed on `account_id`, `transfer_account_id`, and `occurred_at` (the last two added in Phase 10); named `financial_transaction` (not `transaction`) to avoid colliding with SQLDelight's generated `Transaction` class and its own `transaction {}` API |
 
 No `PRAGMA foreign_keys` enforcement is enabled - referential columns
 (`parent_id`, `category_id`, `account_id`, `transfer_account_id`) are

@@ -25,4 +25,11 @@ class SqlTransactionRepository(
             .asFlow()
             .mapToList(Dispatchers.Default)
             .map { rows -> rows.map(::toDomainTransaction) }
+
+    override fun observeRecent(limit: Int): Flow<List<Transaction>> =
+        database.financialTransactionQueries
+            .selectRecent(limit.toLong())
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { rows -> rows.map(::toDomainTransaction) }
 }
