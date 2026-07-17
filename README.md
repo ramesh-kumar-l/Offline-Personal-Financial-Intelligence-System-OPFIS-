@@ -1,12 +1,21 @@
 # OPFIS - Offline Personal Financial Intelligence System
 
+**Your financial life, remembered - entirely offline.**
+
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-7F52FF.svg)
+![Compose Multiplatform](https://img.shields.io/badge/UI-Compose%20Multiplatform-4285F4.svg)
+
 Privacy-first, offline-first, AI-native personal financial
-intelligence platform. See [VISION.md](VISION.md), [PRD.md](PRD.md),
-and [ROADMAP.md](ROADMAP.md) for the product definition,
-[DEMO.md](DEMO.md) for a guided walkthrough, [CHANGELOG.md](CHANGELOG.md)
-for release history, and [SYSTEM.md](SYSTEM.md) plus
-[SystemPrompt/](SystemPrompt/) for the engineering operating system
-this repository is built under.
+intelligence platform. Every screen runs against a single
+SQLCipher-encrypted local database, and its AI assistant cites the
+exact accounts/transactions/documents behind every answer - no server,
+no cloud AI call, no account required. See [VISION.md](VISION.md),
+[PRD.md](PRD.md), and [ROADMAP.md](ROADMAP.md) for the product
+definition, [DEMO.md](DEMO.md) for a guided walkthrough,
+[CHANGELOG.md](CHANGELOG.md) for release history, and
+[SYSTEM.md](SYSTEM.md) plus [SystemPrompt/](SystemPrompt/) for the
+engineering operating system this repository is built under.
 
 ## Status
 
@@ -107,6 +116,17 @@ builds (`assembleRelease`/`bundleRelease`) need a signing config,
 which is intentionally not committed to this repository (see
 `project-memory-bank/25-release-checklist.md`).
 
+## Documentation
+
+- [QuickStarterGuide.md](QuickStarterGuide.md) - zero to a running
+  build in a few minutes (the action-only path).
+- [DEMO.md](DEMO.md) - full scripted walkthrough of every screen.
+- [`documents/`](documents/) - engineering thesis, architecture
+  document, ADR collection, benchmark report, and other deeper-dive
+  material.
+- [`project-memory-bank/`](project-memory-bank/) - the engineering
+  memory bank; start with `05-current-state.md`.
+
 ## Repository layout
 
 ```
@@ -121,3 +141,8 @@ project-memory-bank/   Engineering memory bank (read this first)
 ## License
 
 MIT - see [LICENSE](LICENSE).
+
+## Contributing
+
+This is currently a single-maintainer project. Issues and PRs are
+welcome; there is no formal contribution process yet.

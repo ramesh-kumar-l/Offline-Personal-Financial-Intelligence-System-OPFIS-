@@ -772,3 +772,18 @@ for both Android and Desktop - see the Phase 12 section below and
   done automatically this session.
 - ROADMAP.md defines no Phase 13; ideas for what comes after the v1.0
   MVP are tracked in `26-active-initiatives.md`, not this file.
+
+## Post-release documentation pass (2026-07-18, same day as Phase 12)
+
+Not a ROADMAP.md phase - no production code changed. A `documents/`
+folder was added at the repo root (11 files: leverage strategy,
+engineering thesis, architecture document, ADR collection with 5
+proposed additional ADRs, OSS README positioning, benchmark report,
+Principal Engineer case study, blog series outline, demo/examples
+pack, talk deck outline, future roadmap), plus a new root-level
+`QuickStarterGuide.md`. `README.md` got additive-only edits (tagline,
+badges, a "Documentation" section, a "Contributing" note) - no
+existing section was removed or restructured. See
+`documents/05-benchmark-report.md` for why performance claims stay
+"targeted, not achieved" in all of this material - no empirical
+measurement exists yet.

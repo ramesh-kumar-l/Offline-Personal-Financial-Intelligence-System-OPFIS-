@@ -2,6 +2,39 @@
 
 Last session: 2026-07-18
 
+## Completed in leverage-artifact session (post-Phase 12, same day)
+
+Not a ROADMAP.md phase - a documentation/content-generation pass
+requested after v1.0.0 shipped, scoped as a Principal-altitude,
+"mixed" (career/OSS/startup) leverage-extraction exercise, confirmed
+with the user via two clarifying questions before writing anything.
+
+- Explored `VISION.md`, `PRD.md`, all 5 ADRs in `docs/adr/`,
+  `README.md`, `DEMO.md`, and the relevant `project-memory-bank/`
+  files to ground every artifact in real facts rather than invent
+  content - see `documents/00-leverage-strategy.md`'s "ground truth"
+  section for the exact source list.
+- Produced 11 files under a new `documents/` folder: a master
+  leverage-strategy doc (Pareto analysis, reusable-asset catalog,
+  career/startup leverage sections, 30-day plan) plus 10 selected
+  artifact outlines (engineering thesis, architecture document, ADR
+  collection - 5 real + 5 proposed, OSS README positioning, benchmark
+  report, Principal Engineer case study, blog series outline,
+  demo/examples pack, talk deck outline, future roadmap).
+- Added `QuickStarterGuide.md` at the repo root (new file) and made
+  additive-only edits to `README.md` (tagline, License/KMP/Compose
+  badges, a "Documentation" section, a one-line "Contributing" note) -
+  no existing README content removed or restructured.
+- **Deliberately did not fabricate**: no performance numbers (the
+  Benchmark Report states "not yet measured" for all 3 targets, same
+  as `25-release-checklist.md`), no user-adoption/customer/revenue
+  claims (startup-leverage section in the strategy doc is framed as
+  hypotheses to test, not facts), no new `docs/adr/` files committed
+  as ratified (the 5 proposed ADRs in `documents/03-adr-collection.md`
+  are explicitly labeled "proposed, not yet ratified").
+- No code changed; the standard build gate was not re-run (nothing to
+  verify beyond markdown content and an additive README diff).
+
 ## Completed in Phase 12 session (MVP Release)
 
 - Read `ROADMAP.md`'s Phase 12 definition (documentation, demo,
