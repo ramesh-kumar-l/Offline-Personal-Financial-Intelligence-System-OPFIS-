@@ -50,7 +50,15 @@ class SchemaMigrationTest {
         assertEquals("Offline Mode", row.label)
         assertEquals(1L, row.version)
 
-        // Also proves migrations 4.sqm/5.sqm (Phase 5 document, Phase 6 memory/relationship) applied cleanly.
+        assertMemoryEventMigrationApplied(database)
+        assertRecentTransactionMigrationApplied(database)
+
+        driver.close()
+        Files.deleteIfExists(dbFile)
+    }
+
+    /** Proves migrations 4.sqm/5.sqm (Phase 5 document, Phase 6 memory/relationship) applied cleanly. */
+    private fun assertMemoryEventMigrationApplied(database: OpfisDatabase) {
         database.memoryEventQueries.insertOrReplace(
             id = "mem-1",
             event_type = "NOTE",
@@ -68,8 +76,10 @@ class SchemaMigrationTest {
                 .selectAll()
                 .executeAsList()
         assertEquals(1, memoryEvents.size)
+    }
 
-        // Also proves migration 7.sqm (Phase 10 selectRecent index) applied cleanly.
+    /** Proves migration 7.sqm (Phase 10 selectRecent index) applied cleanly. */
+    private fun assertRecentTransactionMigrationApplied(database: OpfisDatabase) {
         database.financialTransactionQueries.insertOrReplace(
             id = "tx-1",
             account_id = "acc-1",
@@ -83,10 +93,13 @@ class SchemaMigrationTest {
             updated_at = 1000L,
             version = 1L,
         )
-        assertEquals(1, database.financialTransactionQueries.selectRecent(10L).executeAsList().size)
-
-        driver.close()
-        Files.deleteIfExists(dbFile)
+        assertEquals(
+            1,
+            database.financialTransactionQueries
+                .selectRecent(10L)
+                .executeAsList()
+                .size,
+        )
     }
 
     @Test

@@ -12,6 +12,9 @@ interface TransactionRepository {
 
     fun observeByAccount(accountId: String): Flow<List<Transaction>>
 
-    /** The [limit] most recently occurred transactions, newest first - bounded at the query level (ROADMAP Phase 10). */
+    /**
+     * The [limit] most recently occurred transactions, newest first -
+     * bounded at the query level (ROADMAP Phase 10).
+     */
     fun observeRecent(limit: Int): Flow<List<Transaction>>
 }

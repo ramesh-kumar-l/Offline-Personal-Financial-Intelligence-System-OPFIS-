@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.Flow
 class ObserveRecentTransactionsUseCase(
     private val transactionRepository: TransactionRepository,
 ) {
-    operator fun invoke(limit: Int = DEFAULT_LIMIT): Flow<List<Transaction>> = transactionRepository.observeRecent(limit)
+    operator fun invoke(limit: Int = DEFAULT_LIMIT): Flow<List<Transaction>> =
+        transactionRepository.observeRecent(limit)
 
     companion object {
         const val DEFAULT_LIMIT = 10

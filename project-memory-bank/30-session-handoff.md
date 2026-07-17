@@ -1,6 +1,113 @@
 # Session Handoff
 
-Last session: 2026-07-16
+Last session: 2026-07-17
+
+## Completed in Phase 11 session (Testing)
+
+- Owner installed a real JDK 21 (`C:\Program Files\Java\jdk-21.0.11`)
+  and Android SDK 36 (`E:\ANDROID_SDK`) - the first time this project
+  had a working toolchain since the Phase 9/10 session. Created
+  `local.properties` (`sdk.dir`) since none existed.
+- **First action: ran the long-overdue build gate** against Phases 9
+  and 10's previously-unverified code. Took 6 iterations to reach
+  green, each one a real fix, not a formality:
+  1. 15 detekt violations (mostly `MaxLineLength`/`LongMethod`) across
+     Phase 9/10 files - split `ImportExportScreen.kt` into itself +
+     new `ImportExportLaunchers.kt` to bring the main composable under
+     the `LongMethod` threshold, extracting `ImportExportContext`/
+     `ExportUseCases`/`ImportExportUseCases`/`ExportSavers`/
+     `ImportPickers` bundles (matches the existing `ImportExportActions`
+     pattern already in the file).
+  2. ktlint argument-wrapping violations - fixed via `ktlintFormat`
+     auto-fix (same approach as the Phase 7 precedent).
+  3. **Real compile bug**: `FakeRelationshipRepository` in
+     `ObserveKnowledgeGraphUseCaseTest.kt` was missing the
+     `observeAll()` override Phase 9 added to `RelationshipRepository` -
+     only one of the two fakes had been updated when that interface
+     method was added.
+  4. **Real test bug**: `EncryptedPersistenceRecoveryTest`'s
+     "restoreBackup closes the driver so it cannot be used afterward"
+     test asserted querying a closed `SqlDriver` throws - it doesn't,
+     on Desktop's `io.github.willena:sqlite-jdbc` driver (it
+     transparently reopens a connection on next use). Rewritten to
+     assert what's actually true and actually matters: the reopened
+     connection reads the restored file, not stale pre-restore data.
+     Corrected `FileBackupPort`'s doc comments (both platforms) and
+     `17-backup-engine.md` to stop overclaiming why an app restart is
+     required after restore (it's for Koin-singleton/Flow-subscription
+     consistency, not because the driver becomes inert).
+  5. A genuine Kotlin type-inference failure in a new test:
+     `assertEquals(listOf("doc-1" to "tx-2"), repository.linked)`
+     wouldn't compile because `listOf(...)` inferred
+     `List<Pair<String, String>>` against `repository.linked`'s
+     `List<Pair<String, String?>>` - invariant generics can't unify
+     mismatched nullability. Fixed with an explicit type argument.
+  6. Two `private class FakeXRepository` naming collisions
+     (`FakeDocumentRepository`, `FakeRelationshipRepository`) - each
+     already existed in a different test file in the *same* package;
+     file-scoped `private` doesn't prevent same-name collisions within
+     one package. Renamed the newly-added ones.
+  `./gradlew ktlintCheck detekt allTests assemble` is now green for
+  both Android and Desktop - `BUILD SUCCESSFUL in 59s`, 400 tasks.
+- **Closed a large pre-existing domain-layer test gap**: roughly 40
+  simple CRUD use cases (account/asset/budget/category/liability/goal/
+  tag/memory/relationship/document/cashflow/ai) had zero tests before
+  this phase - only the "showcase" flows were covered. Added one
+  consolidated `XUseCasesTest` file per feature (not one file per use
+  case, to keep the file count proportionate to how thin these
+  delegators are) - `AccountUseCasesTest`, `AssetUseCasesTest`,
+  `BudgetUseCasesTest`, `CategoryUseCasesTest`, `LiabilityUseCasesTest`,
+  `GoalUseCasesTest`, `TagUseCasesTest`, `MemoryEventUseCasesTest`,
+  `RelationshipUseCasesTest`, `DocumentUseCasesTest`,
+  `ObserveCashFlowUseCaseTest`, `AiUseCasesTest`.
+- Added `SqlAuditLogRepositoryTest` - the one `Sql*Repository` with no
+  test, notable since it's the audit trail's own persistence.
+- **`:composeApp` got its first test ever** (previously zero test
+  infrastructure of any kind - no `androidTest`, no `desktopTest`, no
+  UI test dependency declared). Added
+  `org.jetbrains.compose.ui:ui-test` (version-matched to
+  `compose-multiplatform` 1.11.1) to a new `desktopTest` source set;
+  `LockScreenBodyTest` (3 cases: Unlock tap, auth-failed message,
+  biometric-unavailable manual-confirm fallback) uses the headless
+  `runComposeUiTest` API - no Robolectric, no Android instrumentation.
+  Chose `LockScreenBody` because it's pure/stateless (no Koin
+  injection, unlike `LockScreen` itself) and security-critical (the
+  app's lock gate). Hit one real API-naming issue along the way:
+  `assertExists()` doesn't resolve against this project's `ui-test`
+  version - `assertIsDisplayed()` does.
+- Updated memory bank: `02-system-architecture.md`,
+  `04-roadmap.md`, `05-current-state.md`, `06-tech-stack.md`,
+  `17-backup-engine.md`, `19-testing-strategy.md` (expanded from a
+  2-line stub), `20-performance-budget.md`, `26-active-initiatives.md`,
+  this file.
+
+## Not completed (as of end of Phase 11 session)
+
+- **No automated performance benchmark harness** - judged
+  disproportionate new infrastructure to add this phase. Cold start,
+  search latency, and dashboard render time against
+  `20-performance-budget.md`'s targets still need a manual timed run on
+  a real device/desktop - this is genuinely the last unconfirmed piece
+  of Phase 10's exit criterion now that the build itself is verified.
+- **UI test coverage is one screen out of ~10** (`LockScreenBody`
+  only). The other screens Koin-inject use cases directly in their
+  top-level composable, so covering them needs either a test Koin
+  module or further state/layout splitting (most already follow the
+  `XScreen`/`XScreenBody` pattern - the bodies are the natural next
+  candidates).
+- **No Android instrumented tests** - still no emulator/device in this
+  environment, unchanged since Phase 1.
+- SQLite `WAL`/`synchronous=NORMAL` pragmas remain deliberately
+  deferred, same restore-corruption risk as before.
+
+## Next recommended task (as of end of Phase 11 session)
+
+1. Manually time cold start, search latency, and dashboard render on a
+   real device/desktop against `20-performance-budget.md`'s targets.
+2. Expand UI test coverage to the remaining `XScreenBody` composables.
+3. Owner review of Phase 11 and explicit direction on Phase 12 (MVP
+   Release) - the standing ROADMAP.md policy is to stop for review
+   between phases.
 
 ## Completed in Phase 10 session (Performance)
 

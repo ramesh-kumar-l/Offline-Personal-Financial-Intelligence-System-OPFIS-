@@ -253,8 +253,18 @@ already thread-safe). `App.kt`'s auto-lock idle-check poll dropped from
 1s to 15s (`AUTO_LOCK_CHECK_INTERVAL_MILLIS`) - still well under the
 5-minute `AutoLockPolicy` timeout, but roughly 15x fewer wakeups.
 
-**Not build-verified this session** (same missing-JDK/Android-SDK
-constraint as Phase 9) and **no profiler/benchmark was run** - the
-20-performance-budget.md targets (cold start &lt;1s, search &lt;100ms,
-dashboard &lt;300ms) are structurally targeted, not empirically
-confirmed - see `05-current-state.md`.
+**Build-verified as of Phase 11** (see below) - `20-performance-budget.md`
+targets remain structurally targeted, not empirically confirmed (no
+profiler/benchmark harness exists).
+
+## Testing (Phase 11, see `19-testing-strategy.md`)
+
+No new production code - this phase ran the first real build gate
+against Phases 9/10 (fixing real bugs it found) and closed test
+coverage gaps: consolidated unit tests for every previously-untested
+`:domain` CRUD feature, `SqlAuditLogRepositoryTest` (the one
+`Sql*Repository` with no test), and `:composeApp`'s first-ever test
+(`LockScreenBodyTest`, via a new `org.jetbrains.compose.ui:ui-test`
+dependency and headless `runComposeUiTest` on a new `desktopTest`
+source set). `./gradlew ktlintCheck detekt allTests assemble` is green
+for both Android and Desktop.

@@ -7,7 +7,13 @@ per platform, never called directly from `commonMain`.
 
 Verified against a real JDK 25 + Android SDK 36 toolchain and Maven
 Central/Google Maven on 2026-07-11 (`./gradlew ktlintCheck detekt
-allTests assemble` all green - see `05-current-state.md`).
+allTests assemble` all green - see `05-current-state.md`). Re-verified
+2026-07-17 (Phase 11) on JDK 21 + Android SDK 36 - same build gate
+green, now also covering Phases 9 and 10's previously-unverified code
+plus Phase 11's own new tests and the new
+`org.jetbrains.compose.ui:ui-test` dependency (version-matched to
+`compose-multiplatform` 1.11.1, `composeApp`'s new `desktopTest`
+source set).
 
 - Kotlin 2.4.0
 - Compose Multiplatform 1.11.1

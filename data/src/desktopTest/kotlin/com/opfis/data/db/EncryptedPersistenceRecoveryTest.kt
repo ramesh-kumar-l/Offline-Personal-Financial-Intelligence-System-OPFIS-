@@ -84,7 +84,7 @@ class EncryptedPersistenceRecoveryTest {
         }
 
     @Test
-    fun `restoreBackup closes the driver so it cannot be used afterward`() =
+    fun `restoreBackup closes the driver before swapping the file, and a write made after export is not preserved`() =
         runTest {
             val dir = createTempDirectory("opfis-restore-closes-driver-test")
             val factory = DatabaseDriverFactory(dir)
@@ -96,11 +96,21 @@ class EncryptedPersistenceRecoveryTest {
             val backupPath = dir.resolve("opfis-backup.db").toAbsolutePath().toString()
             assertTrue(backupPort.exportBackup(backupPath) is BackupResult.Success)
 
+            // Written after the backup snapshot was taken - must not survive the restore.
+            OpfisDatabase(driver).systemStatusQueries.updateState(
+                state = "PENDING",
+                updated_at = 2L,
+                id = "offline_mode",
+            )
+
             assertTrue(backupPort.restoreBackup(backupPath) is BackupResult.Success)
 
-            assertFailsWith<Exception> {
-                OpfisDatabase(driver).systemStatusQueries.selectAll().executeAsList()
-            }
+            // `driver` was closed by restoreBackup, but this JDBC driver transparently
+            // reopens a connection on next use rather than throwing - so the invariant
+            // worth proving is that the reopened connection reads the restored file
+            // (the pre-mutation state), not that the closed reference is inert.
+            val row = OpfisDatabase(driver).systemStatusQueries.selectById("offline_mode").executeAsOne()
+            assertEquals("ACTIVE", row.state)
 
             dir.toFile().deleteRecursively()
         }

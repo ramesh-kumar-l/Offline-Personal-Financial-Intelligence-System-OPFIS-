@@ -32,7 +32,9 @@ class SqlTransactionRepositoryTest {
     fun `observeRecent returns the newest transactions bounded by limit`() =
         runTest {
             val database = testDatabase()
-            (1..5).forEach { i -> seedTransaction(database, "tx-$i", occurredAt = i.toLong()) }
+            for (i in 1..5) {
+                seedTransaction(database, "tx-$i", occurredAt = i.toLong())
+            }
             val repository = SqlTransactionRepository(database)
 
             val result = repository.observeRecent(limit = 2).first()

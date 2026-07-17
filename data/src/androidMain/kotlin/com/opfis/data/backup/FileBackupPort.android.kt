@@ -9,10 +9,15 @@ import java.io.File
  * Uses `VACUUM INTO` for a consistent export while the database is
  * open. Restore closes [driver] itself before copying (an open file
  * handle blocks overwriting on Windows, and leaves a live connection
- * pointed at a swapped-out file everywhere else) - the caller must
- * treat a successful restore as requiring an app restart, since every
- * Koin-held `OpfisDatabase`/repository singleton is permanently bound
- * to this now-closed driver instance (ROADMAP Phase 9).
+ * pointed at a swapped-out file everywhere else). On Desktop,
+ * `EncryptedPersistenceRecoveryTest` (Phase 11) confirmed this does
+ * *not* make the driver permanently unusable - the underlying JDBC
+ * driver transparently reopens on next use; Android's SQLCipher/
+ * SQLite driver stack is unverified here and may differ. Either way,
+ * the caller treats a successful restore as requiring an app restart,
+ * since every Koin-held `OpfisDatabase`/repository singleton would
+ * otherwise keep serving stale in-memory state/`Flow` subscriptions
+ * from before the swap (ROADMAP Phase 9).
  */
 class FileBackupPort(
     private val driver: SqlDriver,

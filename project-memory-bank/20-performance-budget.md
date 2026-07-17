@@ -55,13 +55,18 @@ for the full list. In support of the three budgets above:
 
 ## Verification status
 
-**Not empirically measured.** This session's environment has no
-JDK/Android SDK (same constraint documented for Phase 9 in
-`06-tech-stack.md`), so there is no way to run `./gradlew assemble`,
-profile a cold start, or time a search/dashboard render. All four
-changes above are structurally justified (indexed bounded queries,
-moved blocking I/O off the main thread, reduced poll frequency) and
-manually reviewed, but "performance budgets achieved" cannot be
-confirmed as an exit criterion until someone runs the app on a real
-device/desktop and measures cold start, search latency, and dashboard
-render time against the targets at the top of this file.
+**Build-verified, still not empirically measured.** As of Phase 11
+(2026-07-17) a real JDK 21 + Android SDK 36 toolchain is available and
+`./gradlew ktlintCheck detekt allTests assemble` is green for both
+Android and Desktop - so all four changes above are now confirmed to
+actually compile, and their supporting tests (`SqlTransactionRepositoryTest`,
+`SchemaMigrationTest`) pass. What is still **not** done, because no
+profiler/timing harness was added this phase (judged disproportionate
+new infrastructure for a single-developer offline app - see
+`19-testing-strategy.md`): an actual stopwatch/profiler run of cold
+start, search latency, and dashboard render time against the three
+named targets. All four changes remain structurally justified (indexed
+bounded queries, moved blocking I/O off the main thread, reduced poll
+frequency) but "performance budgets achieved" cannot be marked as
+confirmed until someone runs the packaged app on a real device/desktop
+and times these three interactions by hand.

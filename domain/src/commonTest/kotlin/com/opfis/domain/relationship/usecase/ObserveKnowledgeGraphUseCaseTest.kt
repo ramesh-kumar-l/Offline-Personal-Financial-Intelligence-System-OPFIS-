@@ -20,6 +20,8 @@ private class FakeRelationshipRepository(
         entityId: String,
     ): Flow<List<Relationship>> = flowOf(relationships)
 
+    override fun observeAll(): Flow<List<Relationship>> = error("not used in this test")
+
     override suspend fun upsert(relationship: Relationship) = error("not used in this test")
 
     override suspend fun delete(id: String) = error("not used in this test")

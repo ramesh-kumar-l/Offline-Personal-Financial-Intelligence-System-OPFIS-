@@ -12,7 +12,16 @@ class TransactionCsvUseCasesTest {
         runTest {
             val source = FakeTransactionRepository()
             source.items.add(
-                Transaction("tx-1", "acc-1", "cat-1", TransactionType.EXPENSE, 5_000L, occurredAt = 0L, createdAt = 0L, updatedAt = 0L),
+                Transaction(
+                    "tx-1",
+                    "acc-1",
+                    "cat-1",
+                    TransactionType.EXPENSE,
+                    5_000L,
+                    occurredAt = 0L,
+                    createdAt = 0L,
+                    updatedAt = 0L,
+                ),
             )
 
             val csv = ExportTransactionsCsvUseCase(source)()

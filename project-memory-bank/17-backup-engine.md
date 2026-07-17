@@ -32,20 +32,28 @@ three versions of the same thing:
 
 `FileBackupPort.restoreBackup` (both `androidMain`/`desktopMain`
 actuals) closes its own `SqlDriver` before copying the backup file over
-the live database file. This is not optional: on Windows, an open file
-handle blocks overwriting; on every platform, a live `SqlDriver`
-connection must never be left pointing at a file that was just swapped
-out from under it. But every Koin-held `OpfisDatabase`/repository
-singleton is permanently bound to that one driver instance at
-composition-root startup - there is no supported way to "reopen" the
-driver in place and have all downstream repositories pick up the new
-connection without reconstructing the entire DI graph, which was judged
-too large and risky to attempt in one session. So the UI's restore flow
-is: confirm (destructive, explicit dialog) -> stage the picked file to a
-temp path -> `RestoreBackupUseCase` -> on success, terminate the
-process (`composeApp/.../io/AppExit`) with a message telling the user to
-reopen the app. This is the same trade-off many consumer apps make for
-restore flows, not a shortcut unique to this codebase.
+the live database file - required on Windows, where an open file handle
+blocks overwriting. **Phase 11's `EncryptedPersistenceRecoveryTest`
+proved this does *not* make the driver permanently unusable on Desktop**:
+`io.github.willena:sqlite-jdbc` transparently reopens a connection on
+the next query rather than throwing, and that reopened connection
+correctly reads the swapped-in file (Android's driver stack is
+unverified and may differ - no emulator in this environment). So the
+original assumption behind this section's heading was wrong in its
+specifics. The real reason an app restart is still required: every
+Koin-held `OpfisDatabase`/repository singleton is bound to the driver
+instance from composition-root startup, and their in-memory state/
+`Flow` subscriptions would keep serving pre-restore data even if the
+underlying connection itself still works - there is no supported way to
+"reopen" the driver in place and have every downstream repository pick
+up the new connection's data without reconstructing the entire DI
+graph, which was judged too large and risky to attempt in one session.
+So the UI's restore flow is: confirm (destructive, explicit dialog) ->
+stage the picked file to a temp path -> `RestoreBackupUseCase` -> on
+success, terminate the process (`composeApp/.../io/AppExit`) with a
+message telling the user to reopen the app. This is the same trade-off
+many consumer apps make for restore flows, not a shortcut unique to
+this codebase.
 
 ## Android's `content://` Uri problem
 

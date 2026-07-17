@@ -1,9 +1,11 @@
 # Current State
 
-Last updated: 2026-07-16 (Phases 0-8 closed; Phase 9 Import/Export and
-Phase 10 Performance both implemented this session but NOT
-build-verified - no JDK/Android SDK in this session's environment, see
-the Phase 9/10 sections below and `06-tech-stack.md`)
+Last updated: 2026-07-17 (Phases 0-11 closed. Phase 11 - Testing - ran
+the first real build gate against Phases 9/10's previously-unverified
+code, found and fixed several real bugs, added new tests, and left
+`./gradlew ktlintCheck detekt allTests assemble` green for both
+Android and Desktop - see the Phase 11 section below and
+`19-testing-strategy.md`)
 
 ## Implemented
 
@@ -557,6 +559,69 @@ the Phase 9/10 sections below and `06-tech-stack.md`)
   start, search, dashboard render) are structurally targeted, not
   empirically confirmed.
 
+### Phase 11 - Testing (implemented and build-verified)
+
+- **JDK 21 + Android SDK 36 became available this session** (installed
+  by the owner). First action: ran the long-overdue
+  `./gradlew ktlintCheck detekt allTests assemble` against Phases 9 and
+  10's previously-unverified code. Found and fixed real issues across
+  several iterations:
+  1. 15 detekt violations in Phase 9/10 files (mostly `MaxLineLength`/
+     `LongMethod` from lines that read fine by eye but exceeded the
+     configured limits once actually linted; one `ForEachOnRange`).
+     `ImportExportScreen.kt` was split into `ImportExportScreen.kt` +
+     new `ImportExportLaunchers.kt` to bring its main composable under
+     the `LongMethod` threshold (60 lines) - extracted
+     `ImportExportContext`/`ExportUseCases`/`ImportExportUseCases`/
+     `ExportSavers`/`ImportPickers` bundles, matching the existing
+     `ImportExportActions` bundling pattern.
+  2. **Real compile bug**: `FakeRelationshipRepository` in
+     `ObserveKnowledgeGraphUseCaseTest.kt` was missing the
+     `observeAll()` override that Phase 9 added to
+     `RelationshipRepository` - only the `ImportExportFakes.kt` fake had
+     been updated, this one was missed.
+  3. **Real test bug**: `EncryptedPersistenceRecoveryTest`'s
+     `restoreBackup closes the driver so it cannot be used afterward`
+     asserted that querying a closed `SqlDriver` throws - it doesn't,
+     on Desktop's `io.github.willena:sqlite-jdbc` driver, which
+     transparently reopens a connection on next use. Rewritten to
+     assert the invariant that actually matters (the reopened
+     connection reads the restored file, not stale data); doc comments
+     on `FileBackupPort` (both platforms) and `17-backup-engine.md`
+     corrected to match - see `19-testing-strategy.md`.
+  4. **Real type-inference bug** in a new test:
+     `assertEquals(listOf("doc-1" to "tx-2"), repository.linked)` failed
+     to compile because `listOf(...)` inferred
+     `List<Pair<String, String>>` while `repository.linked` was
+     `List<Pair<String, String?>>` - invariant generics couldn't unify.
+     Fixed with an explicit type argument.
+- **New tests closing coverage gaps** (see `19-testing-strategy.md` for
+  full detail): consolidated `XUseCasesTest` files for every
+  previously-untested `:domain` CRUD feature (account, asset, budget,
+  category, liability, goal, tag, memory, relationship, document,
+  cashflow, ai) - roughly 40 use cases that had zero tests before this
+  phase; `SqlAuditLogRepositoryTest` (the one `Sql*Repository` with no
+  test - security-relevant); `LockScreenBodyTest`, `:composeApp`'s
+  first-ever test of any kind, using the new
+  `org.jetbrains.compose.ui:ui-test` dependency and headless
+  `runComposeUiTest` (no Robolectric/Android instrumentation needed).
+- **Naming collision gotcha discovered**: `private class FakeXRepository`
+  is file-scoped, but two files in the *same package* declaring the
+  identical name still collide at compile time. Hit this twice
+  (`FakeDocumentRepository`, `FakeRelationshipRepository` both already
+  existed under different test files in their packages) - fixed by
+  renaming the newly-added ones.
+- Full build gate (`ktlintCheck detekt allTests assemble`, Android +
+  Desktop) green: `BUILD SUCCESSFUL in 59s`, 400 tasks - now covers
+  Phases 0-11, not just 0-8 as of the last confirmed-green run.
+- **Not done this phase** (deliberate scope cuts, not oversights - see
+  `19-testing-strategy.md`): no automated performance benchmark harness
+  (targets remain structurally justified, not measured); UI test
+  coverage is one screen (`LockScreenBody`) out of ~10, since the
+  others Koin-inject use cases directly and would need either a test
+  Koin module or further screen/body splitting; no Android instrumented
+  tests (still no emulator/device in this environment).
+
 ## Known gaps / not yet verified
 
 - Android's encrypted driver path has no instrumented test (no
@@ -615,32 +680,40 @@ the Phase 9/10 sections below and `06-tech-stack.md`)
   phase (no UI to call them from yet - `AuditEventType` is ready for
   Phase 9 to use). The audit log has no UI to prune/export it and no
   retention policy (append-only, grows unbounded).
-- Phase 9's build gate was never run (no JDK/Android SDK in this
-  session's environment) - the code is manually reviewed only. CSV
-  import/export is transactions-only by design (see `03-domain-model.md`);
-  JSON import recreates `Document` rows as metadata/extracted-text
-  only, never the underlying file bytes; restoring an encrypted backup
-  requires a full app restart (no in-process DI-graph reload); the
-  audit log's `DATA_EXPORTED`/`DATA_IMPORTED` entries record the action
-  but not a diff/summary (`ImportSummary`'s counts are UI-only, not
-  persisted alongside the audit entry).
-- Phase 10's build gate was never run either, same constraint. SQLite
-  `WAL`/`synchronous=NORMAL` pragmas were deliberately not enabled this
-  phase - untested interaction risk with Phase 9's restore flow (stale
+- Phase 9's build gate is now green (Phase 11, see above), but its
+  functional design choices are unchanged: CSV import/export is
+  transactions-only by design (see `03-domain-model.md`); JSON import
+  recreates `Document` rows as metadata/extracted-text only, never the
+  underlying file bytes; restoring an encrypted backup requires a full
+  app restart (no in-process DI-graph reload); the audit log's
+  `DATA_EXPORTED`/`DATA_IMPORTED` entries record the action but not a
+  diff/summary (`ImportSummary`'s counts are UI-only, not persisted
+  alongside the audit entry).
+- Phase 10's build gate is now green too. SQLite `WAL`/
+  `synchronous=NORMAL` pragmas remain deliberately not enabled -
+  untested interaction risk with Phase 9's restore flow (stale
   `-wal`/`-shm` sidecar files aren't cleaned up by `File.copyTo`), see
-  `20-performance-budget.md`. No profiler/benchmark exists in this
-  environment, so the three named performance budgets (cold start,
-  search, dashboard render) are unmeasured.
+  `20-performance-budget.md`. No profiler/benchmark harness was added
+  in Phase 11 either (see below), so the three named performance
+  budgets (cold start, search, dashboard render) remain structurally
+  targeted but unmeasured.
+- Phase 11's own gaps: UI test coverage is one screen out of ~10; no
+  automated performance benchmarks; no Android instrumented tests - see
+  the Phase 11 section above and `19-testing-strategy.md`.
 
 ## Pending
 
-- **Immediate**: run `./gradlew ktlintCheck detekt allTests assemble`
-  on a machine with a real JDK/Android SDK to confirm Phases 9 and 10
-  actually compile and their tests pass - this was not possible in this
-  session's environment (see `06-tech-stack.md`). Treat both phases as
-  unverified until this runs green; then measure cold start, search
-  latency, and dashboard render time against `20-performance-budget.md`.
-- Phase 11 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 11
-  "Testing" (unit/integration/UI/security tests, performance
-  benchmarks) - not yet started, awaiting owner review per
-  ROADMAP.md's "stop for review before the next phase" policy.
+- **Immediate**: manually time cold start, search latency, and
+  dashboard render on a real device/desktop against
+  `20-performance-budget.md`'s targets - no automated benchmark harness
+  exists, and this is the one part of Phase 10's exit criterion
+  ("performance budgets achieved") still unconfirmed now that the build
+  itself is verified.
+- Expand UI test coverage beyond `LockScreenBody` to the other ~9
+  screens - most already follow the `XScreen`/`XScreenBody` split, so
+  the `XScreenBody` composables (pure layout, no Koin) are the natural
+  next candidates - see `19-testing-strategy.md`.
+- Phase 12 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 12 "MVP
+  Release" (documentation, demo, release notes, packaging, v1.0) - not
+  yet started, awaiting owner review per ROADMAP.md's "stop for review
+  before the next phase" policy.
