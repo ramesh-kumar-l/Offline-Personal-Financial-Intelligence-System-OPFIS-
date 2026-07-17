@@ -2,16 +2,50 @@
 
 Privacy-first, offline-first, AI-native personal financial
 intelligence platform. See [VISION.md](VISION.md), [PRD.md](PRD.md),
-and [ROADMAP.md](ROADMAP.md) for the product definition, and
-[SYSTEM.md](SYSTEM.md) plus [SystemPrompt/](SystemPrompt/) for the
-engineering operating system this repository is built under.
+and [ROADMAP.md](ROADMAP.md) for the product definition,
+[DEMO.md](DEMO.md) for a guided walkthrough, [CHANGELOG.md](CHANGELOG.md)
+for release history, and [SYSTEM.md](SYSTEM.md) plus
+[SystemPrompt/](SystemPrompt/) for the engineering operating system
+this repository is built under.
 
 ## Status
 
-**Phase 0 - Foundation** (see `project-memory-bank/05-current-state.md`
-for the current, up-to-date status). This is a scaffold: the
-architecture boundary, module structure, and dependency injection
-wiring are in place; no financial domain logic exists yet.
+**v1.0.0 - MVP Release.** All 12 roadmap phases (0-11: Foundation,
+Persistence, Financial Domain, Dashboard, Search, Documents, Memory,
+Local AI, Security, Import/Export, Performance, Testing) are
+implemented and build-verified: `./gradlew ktlintCheck detekt allTests
+assemble` is green for both Android and Desktop. See
+`project-memory-bank/05-current-state.md` for the detailed,
+up-to-date status and `project-memory-bank/25-release-checklist.md`
+for the release sign-off.
+
+## What it does
+
+OPFIS is a local-only personal finance app - no server, no account,
+no cloud sync. Everything lives in one SQLCipher-encrypted SQLite
+database on the user's own device. Seven screens, all reachable from
+the bottom navigation bar:
+
+- **Dashboard** - net worth, cash flow, recent activity, trust
+  indicators, and a search entry point.
+- **Search** - instant offline full-text search (SQLite FTS5) across
+  accounts, categories, transactions, tags, documents, and memory
+  events, plus a filterable chronological timeline.
+- **Vault** - import receipts/statements/invoices (PDF or image); text
+  is extracted locally (PDFBox + Tesseract OCR on Desktop, PdfRenderer
+  + ML Kit on Android) and becomes searchable, with optional linking to
+  a transaction.
+- **Memory** - a hand-recorded financial timeline (notes and
+  milestones); the underlying `Relationship`/knowledge-graph engine
+  exists but has no dedicated screen yet.
+- **Assistant** - a local, rule-based question-answering engine that
+  cites the accounts/transactions/documents behind every answer. No
+  data ever leaves the device; there is no cloud LLM call.
+- **Security** - biometric unlock (Android) / manual confirm
+  (Desktop), a 5-minute auto-lock, and an append-only audit log of
+  every unlock and data export/import/restore.
+- **Data** - JSON export/import of the full dataset, CSV export/import
+  of transactions, and encrypted whole-database backup/restore.
 
 ## Architecture
 
@@ -26,35 +60,52 @@ Clean Architecture + DDD, four Gradle modules:
   Multiplatform (Compose Multiplatform), targeting Android and
   Desktop.
 
-See `docs/adr/` for the reasoning behind these decisions.
+See `docs/adr/` for the reasoning behind these decisions and
+`project-memory-bank/02-system-architecture.md` for how each phase
+extended this structure.
 
 ## Toolchain setup
 
-This scaffold was authored without a working local build - verify it
-compiles as your first step. You need:
+You need:
 
-1. **JDK 17+**
-2. **Android SDK** with `platform;android-35` and a recent
+1. **JDK 21+** (this project is verified against JDK 21.0.11).
+2. **Android SDK** with `platform;android-36` and a recent
    `build-tools` version, plus `cmdline-tools` (for `sdkmanager`).
    Point `ANDROID_HOME`/`ANDROID_SDK_ROOT` at it, or create
    `local.properties` at the repo root with:
    ```properties
    sdk.dir=/path/to/your/Android/Sdk
    ```
-3. **The Gradle wrapper jar.** `gradle/wrapper/gradle-wrapper.jar` is
-   a binary and is not committed yet. Generate it once, from any
-   machine with a JDK and any Gradle install (or Android Studio, which
-   does this automatically on first project open):
-   ```sh
-   gradle wrapper --gradle-version 8.10
-   ```
-   After that, use `./gradlew` (or `gradlew.bat` on Windows) as usual.
 
 Then verify:
 
 ```sh
 ./gradlew ktlintCheck detekt allTests assemble
 ```
+
+## Running it
+
+```sh
+./gradlew :composeApp:run                 # Desktop, runs in place
+./gradlew :composeApp:assembleDebug       # Android debug APK
+```
+
+## Packaging a release build
+
+Desktop native distributions (app image + installer) are configured
+via the Compose Multiplatform Gradle plugin:
+
+```sh
+./gradlew :composeApp:createDistributable        # runnable app image, no installer tooling needed
+./gradlew :composeApp:packageDistributionForCurrentOS  # installer for the current OS
+```
+
+`packageDistributionForCurrentOS` produces an MSI on Windows (requires
+the WiX Toolset v3 to be installed), a DMG on macOS, or a DEB on
+Linux - all via `jpackage`, bundled with the JDK. Android release
+builds (`assembleRelease`/`bundleRelease`) need a signing config,
+which is intentionally not committed to this repository (see
+`project-memory-bank/25-release-checklist.md`).
 
 ## Repository layout
 
@@ -66,3 +117,7 @@ shared/       Cross-cutting kernel (no business logic)
 docs/adr/     Architecture Decision Records
 project-memory-bank/   Engineering memory bank (read this first)
 ```
+
+## License
+
+MIT - see [LICENSE](LICENSE).

@@ -1,3 +1,4 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -68,8 +69,8 @@ android {
         applicationId = "com.opfis"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0-phase0"
+        versionCode = 2
+        versionName = "1.0.0"
     }
 
     compileOptions {
@@ -81,5 +82,19 @@ android {
 compose.desktop {
     application {
         mainClass = "com.opfis.app.MainKt"
+
+        nativeDistributions {
+            targetFormats(TargetFormat.Msi, TargetFormat.Dmg, TargetFormat.Deb)
+            packageName = "OPFIS"
+            packageVersion = "1.0.0"
+            description = "Offline Personal Financial Intelligence System"
+            copyright = "Copyright (c) 2026 Ramesh Kumar L"
+            vendor = "OPFIS"
+
+            windows {
+                menuGroup = "OPFIS"
+                perUserInstall = true
+            }
+        }
     }
 }

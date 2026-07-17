@@ -1,11 +1,12 @@
 # Current State
 
-Last updated: 2026-07-17 (Phases 0-11 closed. Phase 11 - Testing - ran
-the first real build gate against Phases 9/10's previously-unverified
-code, found and fixed several real bugs, added new tests, and left
-`./gradlew ktlintCheck detekt allTests assemble` green for both
-Android and Desktop - see the Phase 11 section below and
-`19-testing-strategy.md`)
+Last updated: 2026-07-18 (Phases 0-12 closed - **v1.0.0 MVP
+released**. Phase 12 - MVP Release - added documentation/demo/release
+notes, configured and build-verified Desktop native packaging (a real
+unsigned `OPFIS-1.0.0.msi` was produced), and bumped versions to
+1.0.0. `./gradlew ktlintCheck detekt allTests assemble` remains green
+for both Android and Desktop - see the Phase 12 section below and
+`25-release-checklist.md`)
 
 ## Implemented
 
@@ -622,6 +623,52 @@ Android and Desktop - see the Phase 11 section below and
   Koin module or further screen/body splitting; no Android instrumented
   tests (still no emulator/device in this environment).
 
+### Phase 12 - MVP Release (implemented and build-verified)
+
+- No production code changes - documentation, demo, release notes,
+  packaging, and version bump only, per ROADMAP.md's Phase 12 scope.
+- `README.md` fully rewritten: it had still described the Phase 0
+  scaffold ("Status: Phase 0 - Foundation... no financial domain logic
+  exists yet") despite 11 phases of real implementation since - now
+  documents the actual v1.0.0 feature set (all seven screens),
+  architecture, toolchain, run/package instructions.
+- New `CHANGELOG.md` (v1.0.0 release notes, Keep-a-Changelog-style,
+  grouped by the feature areas each phase added) and `DEMO.md` (a
+  scripted, screen-by-screen walkthrough - no seed-data script exists,
+  so the walkthrough creates its own data as it goes, proving Vault
+  import -> Search -> Assistant -> Security audit log -> Data export
+  all stay consistent live).
+- `project-memory-bank/25-release-checklist.md` filled in (was a
+  2-line stub) - a full sign-off against ROADMAP.md's Definition of
+  Done, with explicit checked/unchecked items and the reasoning behind
+  each unchecked one (signing keys, empirical performance measurement,
+  Android device testing - all pre-existing, already-tracked gaps, not
+  new omissions).
+- Packaging: `composeApp/build.gradle.kts` gained
+  `compose.desktop.application.nativeDistributions` (MSI/DMG/DEB
+  target formats, package name/version/vendor/description/Windows
+  menu group). Verified against the real JDK 21 + Android SDK 36
+  toolchain: `./gradlew :composeApp:createDistributable` produces a
+  runnable app image; `./gradlew :composeApp:packageDistributionForCurrentOS`
+  produces a real `OPFIS-1.0.0.msi` on Windows - the Compose Gradle
+  plugin auto-downloads its own bundled WiX Toolset, so no separate
+  WiX install was needed (an unexpected but welcome discovery from
+  reading the build log, not something assumed in advance). The MSI is
+  **unsigned** - no code-signing certificate exists in this
+  environment; this is documented as an explicit release-checklist gap,
+  not a silent omission.
+- Version bump: Android `versionName` "0.1.0-phase0" -> "1.0.0"
+  (`versionCode` 1 -> 2), Desktop `packageVersion` -> "1.0.0". Git
+  tagging (`v1.0.0`) was deliberately not done - tagging/pushing is a
+  release-visibility action left for explicit owner confirmation, per
+  this project's risk-based action guidelines.
+- Full build gate (`ktlintCheck detekt allTests assemble`, Android +
+  Desktop) green after the packaging config change: `BUILD SUCCESSFUL
+  in 11s`, 400 tasks - confirms the new `nativeDistributions` block
+  didn't regress anything, and incidentally confirms
+  `assembleRelease` (the Android release build variant) compiles,
+  though it remains unsigned/undistributable without a keystore.
+
 ## Known gaps / not yet verified
 
 - Android's encrypted driver path has no instrumented test (no
@@ -700,6 +747,12 @@ Android and Desktop - see the Phase 11 section below and
 - Phase 11's own gaps: UI test coverage is one screen out of ~10; no
   automated performance benchmarks; no Android instrumented tests - see
   the Phase 11 section above and `19-testing-strategy.md`.
+- Phase 12's own gaps (see `25-release-checklist.md` for the full
+  list): the desktop MSI is unsigned; no Android release-signing
+  keystore exists, so no distributable Android artifact was produced;
+  macOS DMG/Linux DEB packaging is configured but not build-verified
+  (this development environment is Windows-only); the `v1.0.0` git tag
+  was not created (left for explicit owner action).
 
 ## Pending
 
@@ -707,13 +760,15 @@ Android and Desktop - see the Phase 11 section below and
   dashboard render on a real device/desktop against
   `20-performance-budget.md`'s targets - no automated benchmark harness
   exists, and this is the one part of Phase 10's exit criterion
-  ("performance budgets achieved") still unconfirmed now that the build
-  itself is verified.
+  ("performance budgets achieved") still unconfirmed.
 - Expand UI test coverage beyond `LockScreenBody` to the other ~9
   screens - most already follow the `XScreen`/`XScreenBody` split, so
   the `XScreenBody` composables (pure layout, no Koin) are the natural
   next candidates - see `19-testing-strategy.md`.
-- Phase 12 onward (see `04-roadmap.md` / `ROADMAP.md`): Phase 12 "MVP
-  Release" (documentation, demo, release notes, packaging, v1.0) - not
-  yet started, awaiting owner review per ROADMAP.md's "stop for review
-  before the next phase" policy.
+- Obtain/provision a code-signing certificate (Desktop) and an Android
+  release-signing keystore before any public artifact distribution -
+  see `25-release-checklist.md`.
+- Create and push the `v1.0.0` git tag once the owner confirms - not
+  done automatically this session.
+- ROADMAP.md defines no Phase 13; ideas for what comes after the v1.0
+  MVP are tracked in `26-active-initiatives.md`, not this file.

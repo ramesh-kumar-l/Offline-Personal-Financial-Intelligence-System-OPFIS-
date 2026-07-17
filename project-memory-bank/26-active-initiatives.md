@@ -2,19 +2,28 @@
 
 ## Current phase
 
-Phase 11 (Testing) implemented 2026-07-17. Phases 0-11 are now closed
-and **build-verified**: `./gradlew ktlintCheck detekt allTests
-assemble` is green for both Android and Desktop, using a real JDK 21 +
-Android SDK 36 toolchain the owner installed this session. This
-resolved the standing blocker from the Phase 9/10 session (no
-toolchain was available then) and, along the way, found and fixed
-several real bugs the manual-review-only process had missed - see
-`05-current-state.md`'s Phase 11 section and `19-testing-strategy.md`.
-Phase 12 (MVP Release) is next - not yet started, no owner instruction
-received to begin it.
+**Phase 12 (MVP Release) implemented 2026-07-18 - v1.0.0 shipped.**
+ROADMAP.md's full phase list (0-12) is now closed and build-verified:
+`./gradlew ktlintCheck detekt allTests assemble` is green for both
+Android and Desktop, `README.md`/`CHANGELOG.md`/`DEMO.md` document the
+real v1.0.0 feature set, and a real (unsigned) `OPFIS-1.0.0.msi`
+installer was built and verified against the actual toolchain - see
+`05-current-state.md`'s Phase 12 section and `25-release-checklist.md`
+for the full sign-off. ROADMAP.md defines no Phase 13; everything
+below is forward-looking work, not a next scheduled phase.
 
 ## Active tasks
 
+- Provision a Desktop code-signing certificate and an Android
+  release-signing keystore, then produce signed distributable
+  artifacts - the v1.0.0 MSI built this phase is unsigned and no
+  Android release artifact was produced, both deliberately (no keys
+  exist in this environment) - see `25-release-checklist.md`.
+- Create and push the `v1.0.0` git tag once the owner confirms - left
+  as an explicit owner action, not done automatically.
+- Build-verify macOS DMG / Linux DEB packaging on a machine with that
+  OS - this development environment is Windows-only, so only the MSI
+  target format has actually been produced.
 - Manually time cold start, search latency, and dashboard render
   against `20-performance-budget.md`'s targets (&lt;1s / &lt;100ms /
   &lt;300ms) on a real device/desktop - no automated benchmark harness
@@ -58,11 +67,10 @@ received to begin it.
   in-process Koin-graph reload), CSV support for entities beyond
   transactions, or surfacing `ImportSummary`'s counts in the audit log
   entry itself rather than only the UI.
-- Phase 12 (MVP Release: documentation, demo, release notes, packaging,
-  v1.0) - not yet started, awaiting owner review per ROADMAP.md's "stop
-  for review before the next phase" policy.
-
 ## Blockers
 
 None currently. The JDK/Android SDK toolchain blocker that affected
-Phases 9-10 is resolved as of this session.
+Phases 9-10 is resolved as of this session. Signed-artifact
+distribution is blocked on the owner provisioning a code-signing
+certificate and Android keystore - not a technical blocker, an
+awaited-credential one.

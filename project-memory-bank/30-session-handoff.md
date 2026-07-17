@@ -1,6 +1,93 @@
 # Session Handoff
 
-Last session: 2026-07-17
+Last session: 2026-07-18
+
+## Completed in Phase 12 session (MVP Release)
+
+- Read `ROADMAP.md`'s Phase 12 definition (documentation, demo,
+  release notes, packaging, version 1.0 - exit: "Public MVP") and the
+  full `project-memory-bank/` context before starting; no code files
+  needed reading beyond `composeApp/build.gradle.kts` (to find the
+  existing `compose.desktop { application { ... } }` block to extend)
+  and `Main.kt`'s package (to double-check nothing else referenced the
+  old version string).
+- **Packaging**: added
+  `compose.desktop.application.nativeDistributions` to
+  `composeApp/build.gradle.kts` (MSI/DMG/DEB target formats, package
+  name/version/vendor/description, Windows menu group + per-user
+  install). Bumped Android `versionName` "0.1.0-phase0" -> "1.0.0"
+  (`versionCode` 1 -> 2) and Desktop `packageVersion` -> "1.0.0".
+  Verified against the real JDK 21 + Android SDK 36 toolchain:
+  `./gradlew :composeApp:createDistributable` (runnable app image) and
+  `./gradlew :composeApp:packageDistributionForCurrentOS` (a real,
+  working `OPFIS-1.0.0.msi`) both succeeded. Notable discovery made by
+  reading the build log rather than assumed in advance: the Compose
+  Gradle plugin auto-downloads its own bundled WiX Toolset
+  (`unzipWix` task) - no separate WiX install was needed on this
+  machine to produce the MSI.
+- **Documentation**: `README.md` was still describing the Phase 0
+  scaffold ("no financial domain logic exists yet") despite 11 phases
+  of real implementation since - fully rewritten to describe the
+  actual v1.0.0 feature set (all seven screens), architecture,
+  toolchain, run instructions, and the new packaging commands.
+- **Demo**: new `DEMO.md` - a scripted, screen-by-screen walkthrough.
+  Since this environment has no screen-recording capability and the
+  app has no seed-data script (by design - it starts empty), the
+  walkthrough creates its own data as it goes (one Vault import, one
+  Memory note, one tag) and shows how Search/Assistant/Security's
+  audit log/Data export all stay consistent with it live.
+- **Release notes**: new `CHANGELOG.md` at the repo root, v1.0.0
+  entry grouped by the feature area each phase added, plus an honest
+  "Known limitations" section (no neural AI model, Android device
+  paths unverified, performance budgets unmeasured, no
+  Relationship/KnowledgeGraph UI, UI test coverage still thin).
+- **Release checklist**: `project-memory-bank/25-release-checklist.md`
+  was a 2-line stub - filled in as a full sign-off against
+  ROADMAP.md's Definition of Done (architecture/tests/docs/memory
+  bank/security/performance/UX) plus Phase 12's own five tasks, with
+  every item explicitly checked or explicitly left unchecked with a
+  one-line reason (no signing keys exist in this environment; no
+  profiler/benchmark harness exists; no Android emulator/device
+  exists - all pre-existing, already-tracked gaps, not new ones
+  discovered this phase).
+- Ran the full build gate (`ktlintCheck detekt allTests assemble`,
+  Android + Desktop) after the packaging config change to confirm it
+  didn't regress anything: `BUILD SUCCESSFUL in 11s`, 400 tasks -
+  green, and incidentally confirmed `assembleRelease` (the Android
+  release build variant) compiles even though it remains unsigned.
+- Updated memory bank: `04-roadmap.md`, `05-current-state.md`,
+  `26-active-initiatives.md` (this file, below).
+
+## Not completed
+
+- Signed distributable artifacts (Desktop code-signing certificate,
+  Android release-signing keystore) - no keys/certificates exist in
+  this environment; committing one would be a security incident, not
+  a release step. Left as an explicit owner action.
+- The `v1.0.0` git tag was not created or pushed - tagging/pushing is
+  a release-visibility action deliberately left for explicit owner
+  confirmation, not taken automatically.
+- macOS DMG / Linux DEB packaging was configured but not build-tested
+  - this development environment is Windows-only.
+- Everything already listed as a gap at the end of the Phase 11
+  section below (performance benchmarks, UI test coverage beyond one
+  screen, Android instrumented tests, WAL pragmas, full OS keychain/
+  DPAPI integration, KnowledgeGraph UI, MemoryEvent auto-generation,
+  dataviz palette validation) remains open and unchanged by this
+  phase - Phase 12 was documentation/packaging scope only, not a
+  feature or hardening pass.
+
+## Next recommended task
+
+There is no Phase 13 in `ROADMAP.md` - the roadmap as scoped is
+complete. The two highest-value next steps, in order: (1) provision
+signing credentials and produce real distributable artifacts (the
+product is otherwise ready to hand to a real user), and (2) manually
+time cold start/search/dashboard render against
+`20-performance-budget.md`'s targets, since that is the one exit
+criterion across all 12 phases that remains structurally-justified
+but empirically unconfirmed. Both are owner-driven (credentials,
+real-device access) rather than further coding tasks.
 
 ## Completed in Phase 11 session (Testing)
 
